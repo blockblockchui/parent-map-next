@@ -1,22 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Fix Leaflet marker icons
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-// @ts-ignore - Leaflet internal property
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x.src,
-  iconUrl: markerIcon.src,
-  shadowUrl: markerShadow.src,
+// Fix Leaflet marker icons in Next.js
+const DefaultIcon = L.icon({
+  iconUrl: "/marker-icon.png",
+  iconRetinaUrl: "/marker-icon-2x.png",
+  shadowUrl: "/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
 });
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 interface Place {
   id: string;
@@ -33,7 +31,6 @@ interface MapProps {
   onMarkerClick?: (place: Place) => void;
 }
 
-// Component to handle map bounds
 function MapBounds({ places }: { places: Place[] }) {
   const map = useMap();
   
@@ -49,10 +46,21 @@ function MapBounds({ places }: { places: Place[] }) {
 
 export default function Map({ places, selectedPlaceId, onMarkerClick }: MapProps) {
   const [mounted, setMounted] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Fix selected place
+  useEffect(() => {
+    if (mounted && mapRef.current && selectedPlaceId) {
+      const place = places.find(p => p.id === selectedPlaceId);
+      if (place) {
+        mapRef.current.setView([place.lat, place.lng], 15);
+      }
+    }
+  }, [mounted, selectedPlaceId, places]);
 
   if (!mounted) {
     return (
@@ -62,7 +70,6 @@ export default function Map({ places, selectedPlaceId, onMarkerClick }: MapProps
     );
   }
 
-  // Hong Kong bounds
   const hongKongBounds = L.latLngBounds(
     [22.15, 113.75],
     [22.55, 114.45]
@@ -74,7 +81,8 @@ export default function Map({ places, selectedPlaceId, onMarkerClick }: MapProps
       zoom={11}
       maxBounds={hongKongBounds}
       maxBoundsViscosity={0.8}
-      className="w-full h-[400px] rounded-lg"
+      className="w-full h-[400px] rounded-lg z-0"
+      ref={mapRef}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
