@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import PlaceList from "@/components/PlaceList";
 import locationsData from "@/data/locations.json";
@@ -49,6 +49,9 @@ const priceSymbols: Record<string, string> = {
 export default function Home() {
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [filters, setFilters] = useState({
     region: "all",
     category: "all",
@@ -57,6 +60,24 @@ export default function Home() {
     indoor: "all",
     distance: "all",
   });
+
+  // Load favorites from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("parentMapFavorites");
+    if (saved) {
+      setFavorites(JSON.parse(saved));
+    }
+  }, []);
+
+  const toggleFavorite = (id: string) => {
+    const newFavorites = favorites.includes(id)
+      ? favorites.filter((f) => f !== id)
+      : [...favorites, id];
+    setFavorites(newFavorites);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("parentMapFavorites", JSON.stringify(newFavorites));
+    }
+  };
 
   const places: Place[] = locationsData.locations;
 
@@ -101,6 +122,18 @@ export default function Home() {
 
   const filteredPlaces = useMemo(() => {
     return places.filter((place) => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchName = place.name.toLowerCase().includes(query);
+        const matchDistrict = place.district.toLowerCase().includes(query);
+        const matchCategory = (categoryLabels[place.category] || "").toLowerCase().includes(query);
+        if (!matchName && !matchDistrict && !matchCategory) return false;
+      }
+
+      // Favorites filter
+      if (showFavoritesOnly && !favorites.includes(place.id)) return false;
+
       if (filters.region !== "all" && !place.district.includes(filters.region))
         return false;
       if (filters.category !== "all" && place.category !== filters.category)
@@ -130,7 +163,7 @@ export default function Home() {
       }
       return true;
     });
-  }, [places, filters]);
+  }, [places, filters, searchQuery, showFavoritesOnly, favorites]);
 
   const selectedPlace = places.find((p) => p.id === selectedPlaceId);
 
@@ -157,6 +190,25 @@ export default function Home() {
             <p className="text-base sm:text-lg text-blue-100 mb-4">
               發掘全港最適合親子活動的好去處
             </p>
+
+            {/* Search */}
+            <div className="max-w-2xl mx-auto flex gap-2 px-4 sm:px-0 mb-4">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜尋地點..."
+                className="flex-1 min-w-0 px-4 py-3 rounded-lg text-gray-900 text-base focus:outline-none focus:ring-4 focus:ring-blue-300"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="px-4 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-100"
+                >
+                  清除
+                </button>
+              )}
+            </div>
 
             {/* Scenarios */}
             <div className="flex flex-wrap justify-center gap-2 mb-4">
@@ -267,6 +319,17 @@ export default function Home() {
             >
               重置
             </button>
+
+            <button
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                showFavoritesOnly
+                  ? "bg-red-200 text-red-700 border border-red-400"
+                  : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+              }`}
+            >
+              收藏地點 ({favorites.length})
+            </button>
           </div>
         </div>
       </div>
@@ -318,12 +381,21 @@ export default function Home() {
                   <h2 className="text-xl font-bold mt-2">{selectedPlace.name}</h2>
                   <p className="text-gray-600">{selectedPlace.district}</p>
                 </div>
-                <button
-                  onClick={() => setSelectedPlaceId(null)}
-                  className="text-gray-400 hover:text-gray-600 text-xl"
-                >
-                  x
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => toggleFavorite(selectedPlace.id)}
+                    className="text-2xl hover:scale-110 transition-transform"
+                    title={favorites.includes(selectedPlace.id) ? "取消收藏" : "加入收藏"}
+                  >
+                    {favorites.includes(selectedPlace.id) ? "❤️" : "🤍"}
+                  </button>
+                  <button
+                    onClick={() => setSelectedPlaceId(null)}
+                    className="text-gray-400 hover:text-gray-600 text-xl"
+                  >
+                    x
+                  </button>
+                </div>
               </div>
 
               <div className="flex gap-2 mb-4">
