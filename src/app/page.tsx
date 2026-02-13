@@ -61,19 +61,42 @@ export default function Home() {
   const places: Place[] = locationsData.locations;
 
   const handleLocate = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        },
-        () => {
-          alert("無法取得位置，請檢查瀏覽器權限");
-        }
-      );
+    if (!navigator.geolocation) {
+      alert("你的瀏覽器不支援定位功能");
+      return;
     }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        setUserLocation(newLocation);
+        alert(`已定位：緯度 ${newLocation.lat.toFixed(4)}, 經度 ${newLocation.lng.toFixed(4)}`);
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        let message = "無法取得位置";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = "請允許使用定位權限（瀏覽器地址欄左邊會有提示）";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "位置資訊不可用";
+            break;
+          case error.TIMEOUT:
+            message = "定位超時，請重試";
+            break;
+        }
+        alert(message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
   };
 
   const filteredPlaces = useMemo(() => {
@@ -255,6 +278,7 @@ export default function Home() {
             places={filteredPlaces}
             selectedPlaceId={selectedPlaceId}
             onMarkerClick={(place) => setSelectedPlaceId(place.id)}
+            userLocation={userLocation}
           />
           <button
             onClick={handleLocate}

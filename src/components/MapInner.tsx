@@ -18,6 +18,7 @@ interface MapInnerProps {
   places: Place[];
   selectedPlaceId?: string | null;
   onMarkerClick?: (place: Place) => void;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 // Fix Leaflet default icon
@@ -47,7 +48,8 @@ function MapBounds({ places }: { places: Place[] }) {
 function MapRef({ 
   places, 
   selectedPlaceId, 
-  onMarkerClick 
+  onMarkerClick,
+  userLocation
 }: MapInnerProps) {
   const mapRef = useRef<L.Map | null>(null);
 
@@ -63,6 +65,12 @@ function MapRef({
       }
     }
   }, [selectedPlaceId, places]);
+
+  useEffect(() => {
+    if (mapRef.current && userLocation) {
+      mapRef.current.setView([userLocation.lat, userLocation.lng], 14);
+    }
+  }, [userLocation]);
 
   const hongKongBounds = L.latLngBounds(
     [22.15, 113.75],
@@ -99,6 +107,23 @@ function MapRef({
           </Popup>
         </Marker>
       ))}
+      {userLocation && (
+        <Marker
+          position={[userLocation.lat, userLocation.lng]}
+          icon={L.divIcon({
+            className: "custom-div-icon",
+            html: "<div style='background-color:#3b82f6;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);'></div>",
+            iconSize: [16, 16],
+            iconAnchor: [8, 8],
+          })}
+        >
+          <Popup>
+            <div className="font-sans">
+              <p className="font-bold text-sm">你的位置</p>
+            </div>
+          </Popup>
+        </Marker>
+      )}
     </MapContainer>
   );
 }

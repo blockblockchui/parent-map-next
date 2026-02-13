@@ -29,6 +29,7 @@ interface MapProps {
   places: Place[];
   selectedPlaceId?: string | null;
   onMarkerClick?: (place: Place) => void;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 export default function Map(props: MapProps) {
