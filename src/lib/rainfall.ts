@@ -39,13 +39,23 @@ export function parseRainfallCSV(csvText: string): RainfallGridPoint[] {
 export async function fetchRainfallNowcast(): Promise<RainfallGridPoint[]> {
   try {
     // Use local API route to proxy the request and avoid CORS
+    console.log('Fetching from /api/rainfall...');
     const response = await fetch('/api/rainfall', { cache: 'no-store' });
     
     if (!response.ok) {
-      throw new Error('Failed to fetch rainfall data');
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
     const csvText = await response.text();
+    console.log('CSV text length:', csvText.length);
+    console.log('CSV first 200 chars:', csvText.substring(0, 200));
+    
+    if (!csvText || csvText.length < 100) {
+      throw new Error('Empty or invalid CSV response');
+    }
+    
     const points = parseRainfallCSV(csvText);
+    console.log('Parsed points count:', points.length);
     
     // Debug: log data range
     if (points.length > 0) {
@@ -58,6 +68,8 @@ export async function fetchRainfallNowcast(): Promise<RainfallGridPoint[]> {
         lngMax: Math.max(...lngs),
         totalPoints: points.length
       });
+    } else {
+      console.warn('No points parsed from CSV');
     }
     
     return points;
@@ -188,20 +200,35 @@ export function useRainfallNowcast() {
 
     async function loadRainfall() {
       try {
+        // Clear old cache format (force refresh after code update)
+        const cacheVersion = localStorage.getItem('rainfall_cache_version');
+        if (cacheVersion !== '2') {
+          console.log('Clearing old rainfall cache...');
+          localStorage.removeItem('rainfall_cache');
+          localStorage.removeItem('rainfall_cache_time');
+          localStorage.setItem('rainfall_cache_version', '2');
+        }
+
         // Check cache first (valid for 5 minutes)
         const cached = localStorage.getItem('rainfall_cache');
         const cachedTime = localStorage.getItem('rainfall_cache_time');
         const now = Date.now();
 
         if (cached && cachedTime && (now - parseInt(cachedTime)) < 300000) {
-          if (mounted) {
+          try {
             const data = JSON.parse(cached);
-            console.log('Using cached rainfall data:', data.length, 'points');
-            setGridPoints(data);
-            setLastUpdate(new Date(parseInt(cachedTime)).toLocaleTimeString('zh-HK'));
-            setLoading(false);
+            if (Array.isArray(data) && data.length > 0) {
+              console.log('Using cached rainfall data:', data.length, 'points');
+              if (mounted) {
+                setGridPoints(data);
+                setLastUpdate(new Date(parseInt(cachedTime)).toLocaleTimeString('zh-HK'));
+                setLoading(false);
+              }
+              return;
+            }
+          } catch (e) {
+            console.log('Invalid cache, fetching fresh data...');
           }
-          return;
         }
 
         console.log('Fetching fresh rainfall data...');
@@ -215,6 +242,7 @@ export function useRainfallNowcast() {
           setLoading(false);
         }
       } catch (err) {
+        console.error('Error in loadRainfall:', err);
         if (mounted) {
           setError(err instanceof Error ? err.message : 'Failed to load rainfall data');
           setLoading(false);
