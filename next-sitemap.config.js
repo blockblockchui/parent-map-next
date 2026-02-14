@@ -3,7 +3,6 @@ module.exports = {
   siteUrl: 'https://parentmap.hk',
   generateRobotsTxt: true,
   generateIndexSitemap: false,
-  outDir: 'dist',
   additionalPaths: async (config) => {
     const locationsData = require('./src/data/locations.json');
     
