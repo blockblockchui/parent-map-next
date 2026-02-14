@@ -303,7 +303,7 @@ export default function Home() {
       </header>
 
       {/* Sticky Filter Bar Only */}
-      <div className="sticky top-0 z-40 bg-white border-b">
+      <div className="sticky top-0 z-40 bg-white">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex flex-wrap gap-2 items-center">
             <select
@@ -411,7 +411,7 @@ export default function Home() {
 
       {/* Map - Not sticky */}
       {showMap && (
-        <div className="bg-white border-b">
+        <div className="bg-white">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div 
               className="relative rounded-lg overflow-hidden"
@@ -436,7 +436,7 @@ export default function Home() {
       )}
 
       {/* Result Header - Sticky (below filter bar) */}
-      <div className="sticky top-[60px] z-30 bg-gray-50 border-b py-3 shadow-sm">
+      <div className="sticky top-[60px] z-30 bg-gray-50 py-3 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm text-gray-600">搵到 {filteredPlaces.length} 個好去處</p>
