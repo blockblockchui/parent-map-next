@@ -68,7 +68,12 @@ export default function Home() {
   const [showMap, setShowMap] = useState(true);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'priceLow' | 'priceHigh'>('default');
-  const [isListView, setIsListView] = useState(false);
+  const [isListView, setIsListView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
   const [filterBarHeight, setFilterBarHeight] = useState(60);
   const filterBarRef = useRef<HTMLDivElement>(null);
 
@@ -89,9 +94,14 @@ export default function Home() {
     };
     
     updateHeight();
+    // Small delay to ensure DOM is fully rendered after map toggle
+    const timeout = setTimeout(updateHeight, 50);
     window.addEventListener('resize', updateHeight);
-    return () => window.removeEventListener('resize', updateHeight);
-  }, []);
+    return () => {
+      window.removeEventListener('resize', updateHeight);
+      clearTimeout(timeout);
+    };
+  }, [showMap]);
 
   const toggleFavorite = (id: string) => {
     const newFavorites = favorites.includes(id)
@@ -428,7 +438,9 @@ export default function Home() {
             <div className="max-w-7xl mx-auto px-4 py-4">
               <div 
                 className="relative rounded-lg overflow-hidden"
-                style={{ height: 'clamp(250px, 50vw, 350px)' }}
+                style={{ 
+                  height: 'clamp(200px, 40vw, 350px)'
+                }}
               >
                 <Map
                   places={filteredPlaces}
