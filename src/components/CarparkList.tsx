@@ -25,11 +25,9 @@ export default function CarparkList({
   maxResults = 5
 }: CarparkListProps) {
   const nearbyCarparks = useMemo(() => {
-    // Filter out closed carparks and invalid vacancy data (-1)
+    // Filter out only invalid vacancy data (-1), keep all others
     const validCarparks = carparks.filter(c =>
-      c.opening_status === 'OPEN' &&
-      c.vacancy &&
-      c.vacancy.vacancy !== -1
+      !c.vacancy || c.vacancy.vacancy !== -1
     );
     return getNearbyCarparks<CarparkWithVacancy>(validCarparks, placeLat, placeLng, radiusKm).slice(0, maxResults);
   }, [carparks, placeLat, placeLng, radiusKm, maxResults]);
@@ -78,14 +76,15 @@ export default function CarparkList({
                       {index + 1}. {carpark.name}
                     </span>
                     {carpark.opening_status === 'OPEN' ? (
-                      <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">開放中</span>
+                      vacancyDisplay ? (
+                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${vacancyDisplay.color}`}>
+                          空位: {vacancyDisplay.text}
+                        </span>
+                      ) : (
+                        <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">開放中</span>
+                      )
                     ) : (
-                      <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">已關閉</span>
-                    )}
-                    {vacancyDisplay && (
-                      <span className={`text-xs px-2 py-0.5 rounded font-medium ${vacancyDisplay.color}`}>
-                        空位: {vacancyDisplay.text}
-                      </span>
+                      <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">狀態不明</span>
                     )}
                   </div>
 
