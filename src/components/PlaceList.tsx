@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
 
 interface Place {
   id: string;
@@ -30,6 +29,7 @@ interface PlaceListProps {
   sortBy?: 'default' | 'distance' | 'price';
   favorites?: string[];
   onToggleFavorite?: (id: string) => void;
+  activeScenario?: string | null;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -45,16 +45,6 @@ const priceSymbols: Record<string, string> = {
   low: "$",
   medium: "$$",
   high: "$$$",
-};
-
-// Generate slug from place name
-const generateSlug = (name: string): string => {
-  return name
-    .toLowerCase()
-    .replace(/[^\w\s\u4e00-\u9fa5-]/g, "") // Keep Chinese characters
-    .replace(/\s+/g, "-")
-    .replace(/-+$/, "") // Remove trailing dashes
-    .substring(0, 50);
 };
 
 // Calculate distance between two points (Haversine formula)
@@ -76,7 +66,7 @@ function calculateWalkingTime(distanceMeters: number): { minutes: number; displa
   if (minutes <= 30) {
     return { minutes, display: `約${minutes}分鐘` };
   }
-  return { minutes, display: "行路有啲遠" };
+  return { minutes, display: "🚶有啲遠" };
 }
 
 export default function PlaceList({ 
@@ -86,7 +76,8 @@ export default function PlaceList({
   userLocation,
   sortBy = 'default',
   favorites = [],
-  onToggleFavorite
+  onToggleFavorite,
+  activeScenario
 }: PlaceListProps) {
   // Default: list view on mobile (<768px), grid on desktop
   const [isListView, setIsListView] = useState(() => {
@@ -116,7 +107,7 @@ export default function PlaceList({
   if (places.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
-        <p>暫時找不到符合條件的地點</p>
+        <p>暫時搵不到符合條件的地點</p>
       </div>
     );
   }
@@ -125,7 +116,14 @@ export default function PlaceList({
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-600">找到 {places.length} 個好去處</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-gray-600">搵到 {places.length} 個好去處</p>
+          {activeScenario && (
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              {activeScenario}
+            </span>
+          )}
+        </div>
         <button
           onClick={() => setIsListView(!isListView)}
           className="px-3 py-1.5 border rounded-lg text-sm bg-white hover:bg-gray-50"
@@ -238,13 +236,6 @@ function PlaceCard({
                   <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
                     {priceSymbols[place.priceType] || place.priceType}
                   </span>
-                  <Link
-                    href={`/place/${generateSlug(place.name)}`}
-                    className="text-xs text-blue-600 hover:underline ml-auto"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    查看詳情 →
-                  </Link>
                 </div>
               </div>
               {/* Favorite button - always visible */}
@@ -327,13 +318,7 @@ function PlaceCard({
             </button>
           )}
         </div>
-        <Link
-          href={`/place/${generateSlug(place.name)}`}
-          className="block"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h3 className="font-bold text-gray-900 mt-2 hover:text-blue-600 transition-colors">{place.name}</h3>
-        </Link>
+        <h3 className="font-bold text-gray-900 mt-2">{place.name}</h3>
         <p className="text-sm text-gray-600 mt-1">{place.district}</p>
         <div className="flex items-center gap-2 mt-2">
           <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">
@@ -342,13 +327,6 @@ function PlaceCard({
           <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
             {priceSymbols[place.priceType] || place.priceType}
           </span>
-          <Link
-            href={`/place/${generateSlug(place.name)}`}
-            className="text-xs text-blue-600 hover:underline ml-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            詳情 →
-          </Link>
         </div>
       </div>
     </div>

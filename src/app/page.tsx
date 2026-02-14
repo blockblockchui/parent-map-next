@@ -61,20 +61,7 @@ export default function Home() {
     indoor: "all",
   });
   const [showMap, setShowMap] = useState(true);
-  const [showBackToTop, setShowBackToTop] = useState(false);
-
-  // Handle scroll for back-to-top button
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 300);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const [activeScenario, setActiveScenario] = useState<string | null>(null);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -98,7 +85,6 @@ export default function Home() {
 
   const handleLocate = () => {
     if (!navigator.geolocation) {
-      alert("你的瀏覽器不支援定位功能");
       return;
     }
     
@@ -109,23 +95,9 @@ export default function Home() {
           lng: position.coords.longitude,
         };
         setUserLocation(newLocation);
-        alert(`已定位：緯度 ${newLocation.lat.toFixed(4)}, 經度 ${newLocation.lng.toFixed(4)}`);
       },
       (error) => {
         console.error("Geolocation error:", error);
-        let message = "無法取得位置";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            message = "請允許使用定位權限（瀏覽器地址欄左邊會有提示）";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            message = "位置資訊不可用";
-            break;
-          case error.TIMEOUT:
-            message = "定位超時，請重試";
-            break;
-        }
-        alert(message);
       },
       {
         enableHighAccuracy: true,
@@ -222,7 +194,7 @@ export default function Home() {
     if (minutes <= 30) {
       return { minutes, display: `約${minutes}分鐘` };
     }
-    return { minutes, display: "行路有啲遠" };
+    return { minutes, display: "🚶有啲遠" };
   };
 
   // Get distance display for a place
@@ -258,37 +230,58 @@ export default function Home() {
                 placeholder="搜尋地點..."
                 className="flex-1 min-w-0 px-4 py-3 rounded-lg text-gray-900 text-base focus:outline-none focus:ring-4 focus:ring-blue-300"
               />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="px-4 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-100"
-                >
-                  清除
-                </button>
-              )}
+              <button
+                onClick={() => setSearchQuery("")}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  searchQuery
+                    ? "bg-yellow-400 text-yellow-900 hover:bg-yellow-500"
+                    : "bg-white text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                {searchQuery ? "清除" : "搜尋"}
+              </button>
             </div>
 
             {/* Scenarios */}
             <div className="flex flex-wrap justify-center gap-2 mb-4">
               <button
-                onClick={() => setFilters({ ...filters, indoor: "indoor" })}
-                className="px-4 py-2 bg-white/90 text-blue-700 rounded-full text-sm font-medium hover:bg-white"
+                onClick={() => {
+                  setFilters({ ...filters, indoor: "indoor" });
+                  setActiveScenario("☔ 唔怕落雨");
+                }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  activeScenario === "☔ 唔怕落雨"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white/90 text-blue-700 hover:bg-white"
+                }`}
               >
-                唔怕落雨
+                ☔ 唔怕落雨
               </button>
               <button
-                onClick={() => setFilters({ ...filters, age: "0-1" })}
-                className="px-4 py-2 bg-white/90 text-blue-700 rounded-full text-sm font-medium hover:bg-white"
+                onClick={() => {
+                  setFilters({ ...filters, age: "0-1" });
+                  setActiveScenario("👶 2歲以下");
+                }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  activeScenario === "👶 2歲以下"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white/90 text-blue-700 hover:bg-white"
+                }`}
               >
-                2歲以下
+                👶 2歲以下
               </button>
               <button
                 onClick={() => {
                   setFilters({ ...filters, indoor: "indoor", age: "3-6" });
+                  setActiveScenario("🎂 生日會場地");
                 }}
-                className="px-4 py-2 bg-white/90 text-blue-700 rounded-full text-sm font-medium hover:bg-white"
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  activeScenario === "🎂 生日會場地"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white/90 text-blue-700 hover:bg-white"
+                }`}
               >
-                生日會場地
+                🎂 生日會場地
               </button>
             </div>
           </div>
@@ -440,6 +433,7 @@ export default function Home() {
           userLocation={userLocation}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
+          activeScenario={activeScenario}
         />
       </div>
 
@@ -493,13 +487,6 @@ export default function Home() {
               </div>
 
               <div className="flex gap-2 mb-4">
-                <Link
-                  href={`/place/${generateSlug(selectedPlace.name)}`}
-                  className="flex-1 py-2 text-center bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
-                  onClick={() => setSelectedPlaceId(null)}
-                >
-                  查看詳情
-                </Link>
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPlace.lat},${selectedPlace.lng}`}
                   target="_blank"
@@ -524,18 +511,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Back to Top Button */}
-      {showBackToTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-          title="回到頂部"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-          </svg>
-        </button>
-      )}
     </main>
   );
 }
