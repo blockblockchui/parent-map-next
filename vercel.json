@@ -1,5 +1,5 @@
 {
   "version": 2,
-  "cleanUrls": false,
-  "trailingSlash": true
+  "cleanUrls": true,
+  "trailingSlash": false
 }
