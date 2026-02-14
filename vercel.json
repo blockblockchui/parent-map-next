@@ -1,5 +1,10 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/place/:slug",
+      "destination": "/place/:slug.html"
+    }
+  ]
 }
