@@ -359,6 +359,7 @@ export default function Home() {
           places={filteredPlaces}
           selectedPlaceId={selectedPlaceId}
           onPlaceClick={(place) => setSelectedPlaceId(place.id)}
+          userLocation={userLocation}
         />
       </div>
 

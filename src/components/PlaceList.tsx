@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface Place {
   id: string;
@@ -8,6 +8,8 @@ interface Place {
   nameEn?: string;
   district: string;
   region: string;
+  lat: number;
+  lng: number;
   category: string;
   indoor: boolean;
   ageRange: number[];
@@ -23,6 +25,8 @@ interface PlaceListProps {
   places: Place[];
   onPlaceClick?: (place: Place) => void;
   selectedPlaceId?: string | null;
+  userLocation?: { lat: number; lng: number } | null;
+  sortBy?: 'default' | 'distance' | 'price';
 }
 
 const categoryLabels: Record<string, string> = {
@@ -40,8 +44,53 @@ const priceSymbols: Record<string, string> = {
   high: "$$$",
 };
 
-export default function PlaceList({ places, onPlaceClick, selectedPlaceId }: PlaceListProps) {
+// Calculate distance between two points (Haversine formula)
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000; // Earth's radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Calculate walking time (1km = 12 minutes)
+function calculateWalkingTime(distanceMeters: number): { minutes: number; display: string } {
+  const distanceKm = distanceMeters / 1000;
+  const minutes = Math.round(distanceKm * 12);
+  if (minutes <= 30) {
+    return { minutes, display: `約${minutes}分鐘` };
+  }
+  return { minutes, display: "遠左啲" };
+}
+
+export default function PlaceList({ 
+  places, 
+  onPlaceClick, 
+  selectedPlaceId,
+  userLocation,
+  sortBy = 'default'
+}: PlaceListProps) {
   const [isListView, setIsListView] = useState(false);
+
+  // Calculate distances and sort
+  const placesWithDistance = useMemo(() => {
+    const withDist = places.map(place => {
+      if (userLocation) {
+        const dist = calculateDistance(userLocation.lat, userLocation.lng, place.lat, place.lng);
+        const walking = calculateWalkingTime(dist);
+        return { ...place, distance: dist, walkingTime: walking };
+      }
+      return { ...place, distance: null, walkingTime: null };
+    });
+
+    if (sortBy === 'distance' && userLocation) {
+      return withDist.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    }
+    return withDist;
+  }, [places, userLocation, sortBy]);
 
   if (places.length === 0) {
     return (
@@ -66,13 +115,14 @@ export default function PlaceList({ places, onPlaceClick, selectedPlaceId }: Pla
 
       {/* List */}
       <div className={isListView ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
-        {places.map((place) => (
+        {placesWithDistance.map((place) => (
           <PlaceCard
             key={place.id}
             place={place}
             isListView={isListView}
             isSelected={selectedPlaceId === place.id}
             onClick={() => onPlaceClick?.(place)}
+            userLocation={userLocation}
           />
         ))}
       </div>
@@ -80,20 +130,34 @@ export default function PlaceList({ places, onPlaceClick, selectedPlaceId }: Pla
   );
 }
 
+interface PlaceWithDistance extends Place {
+  distance: number | null;
+  walkingTime: { minutes: number; display: string } | null;
+}
+
 function PlaceCard({
   place,
   isListView,
   isSelected,
   onClick,
+  userLocation,
 }: {
-  place: Place;
+  place: PlaceWithDistance;
   isListView: boolean;
   isSelected: boolean;
   onClick: () => void;
+  userLocation?: { lat: number; lng: number } | null;
 }) {
   const hasImage = place.images?.local || place.images?.cloudinary;
   const imageUrl = place.images?.local || place.images?.cloudinary;
   const categoryColor = getCategoryColor(place.category);
+  
+  // Format distance display
+  const distanceDisplay = place.distance !== null && place.distance !== undefined
+    ? place.distance >= 1000 
+      ? `${(place.distance / 1000).toFixed(1)}公里`
+      : `${Math.round(place.distance)}米`
+    : null;
 
   if (isListView) {
     return (
@@ -127,11 +191,16 @@ function PlaceCard({
               <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
                 {categoryLabels[place.category] || place.category}
               </span>
+              {distanceDisplay && place.walkingTime && (
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                  {distanceDisplay} 🚶{place.walkingTime.display}
+                </span>
+              )}
             </div>
             <h3 className="font-bold text-gray-900 truncate">{place.name}</h3>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{place.district}</span>
-              <span className="text-xs">{place.indoor ? "🏠 室內" : "🌳 戶外"}</span>
+              <span className="text-xs">{place.indoor ? "室內" : "戶外"}</span>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
@@ -178,9 +247,14 @@ function PlaceCard({
           <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
             {categoryLabels[place.category] || place.category}
           </span>
+          {distanceDisplay && place.walkingTime && (
+            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+              {distanceDisplay} 🚶{place.walkingTime.display}
+            </span>
+          )}
         </div>
         <h3 className="font-bold text-gray-900 mt-2">{place.name}</h3>
-        <p className="text-sm text-gray-600 mt-1">📍 {place.district}</p>
+        <p className="text-sm text-gray-600 mt-1">{place.district}</p>
         <div className="flex items-center gap-2 mt-2">
           <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">
             {place.ageRange[0]}-{place.ageRange[1]}歲
