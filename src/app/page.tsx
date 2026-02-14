@@ -4,7 +4,9 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import PlaceList from "@/components/PlaceList";
+import CarparkList from "@/components/CarparkList";
 import locationsData from "@/data/locations.json";
+import { useCarparks } from "@/lib/carpark";
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -80,6 +82,9 @@ export default function Home() {
   });
   const [filterBarHeight, setFilterBarHeight] = useState(60);
   const filterBarRef = useRef<HTMLDivElement>(null);
+  
+  // Fetch carparks data
+  const { carparks } = useCarparks();
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -781,7 +786,7 @@ export default function Home() {
               })()}
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-4">
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPlace.lat},${selectedPlace.lng}`}
                   target="_blank"
@@ -800,6 +805,17 @@ export default function Home() {
                     {getWebsiteLabel(selectedPlace)}
                   </a>
                 )}
+              </div>
+
+              {/* Carpark Information */}
+              <div className="border-t pt-4">
+                <CarparkList
+                  carparks={carparks}
+                  placeLat={selectedPlace.lat}
+                  placeLng={selectedPlace.lng}
+                  radiusKm={1}
+                  maxResults={5}
+                />
               </div>
             </div>
           </div>
