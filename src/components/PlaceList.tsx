@@ -236,10 +236,14 @@ function PlaceCard({
                     e.stopPropagation();
                     onToggleFavorite(place.id);
                   }}
-                  className="text-xl hover:scale-110 transition-transform flex-shrink-0 p-1"
+                  className={`text-xs px-2 py-1 rounded transition-colors flex-shrink-0 ${
+                    isFavorite 
+                      ? "bg-red-100 text-red-700 hover:bg-red-200" 
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
                   title={isFavorite ? "取消收藏" : "加入收藏"}
                 >
-                  {isFavorite ? "❤️" : "🤍"}
+                  {isFavorite ? "已收藏" : "收藏"}
                 </button>
               )}
             </div>
@@ -294,10 +298,14 @@ function PlaceCard({
                 e.stopPropagation();
                 onToggleFavorite(place.id);
               }}
-              className="text-xl hover:scale-110 transition-transform p-1"
+              className={`text-xs px-2 py-1 rounded transition-colors ${
+                isFavorite 
+                  ? "bg-red-100 text-red-700 hover:bg-red-200" 
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
               title={isFavorite ? "取消收藏" : "加入收藏"}
             >
-              {isFavorite ? "❤️" : "🤍"}
+              {isFavorite ? "已收藏" : "收藏"}
             </button>
           )}
         </div>

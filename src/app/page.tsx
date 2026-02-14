@@ -442,17 +442,21 @@ export default function Home() {
                     );
                   })()}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-start">
                   <button
                     onClick={() => toggleFavorite(selectedPlace.id)}
-                    className="text-2xl hover:scale-110 transition-transform"
+                    className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
+                      favorites.includes(selectedPlace.id)
+                        ? "bg-red-100 text-red-700 hover:bg-red-200"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                     title={favorites.includes(selectedPlace.id) ? "取消收藏" : "加入收藏"}
                   >
-                    {favorites.includes(selectedPlace.id) ? "❤️" : "🤍"}
+                    {favorites.includes(selectedPlace.id) ? "已收藏" : "收藏"}
                   </button>
                   <button
                     onClick={() => setSelectedPlaceId(null)}
-                    className="text-gray-400 hover:text-gray-600 text-xl"
+                    className="text-gray-400 hover:text-gray-600 text-xl px-2"
                   >
                     x
                   </button>
