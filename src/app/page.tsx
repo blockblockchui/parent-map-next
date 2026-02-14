@@ -62,7 +62,7 @@ export default function Home() {
   });
   const [showMap, setShowMap] = useState(true);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'default' | 'distance' | 'price'>('default');
+  const [sortBy, setSortBy] = useState<'default' | 'distance' | 'priceLow' | 'priceHigh'>('default');
   const [isListView, setIsListView] = useState(false);
   const [filterBarHeight, setFilterBarHeight] = useState(60);
   const filterBarRef = useRef<HTMLDivElement>(null);
@@ -173,9 +173,13 @@ export default function Home() {
         const distB = calculateDistance(userLocation.lat, userLocation.lng, b.lat, b.lng);
         return distA - distB;
       }
-      if (sortBy === 'price') {
+      if (sortBy === 'priceLow') {
         const priceOrder = { free: 0, low: 1, medium: 2, high: 3 };
         return priceOrder[a.priceType as keyof typeof priceOrder] - priceOrder[b.priceType as keyof typeof priceOrder];
+      }
+      if (sortBy === 'priceHigh') {
+        const priceOrder = { free: 0, low: 1, medium: 2, high: 3 };
+        return priceOrder[b.priceType as keyof typeof priceOrder] - priceOrder[a.priceType as keyof typeof priceOrder];
       }
       return 0;
     });
@@ -461,12 +465,13 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'default' | 'distance' | 'price')}
+              onChange={(e) => setSortBy(e.target.value as 'default' | 'distance' | 'priceLow' | 'priceHigh')}
               className="px-2 py-1.5 border rounded-lg text-sm bg-white"
             >
               <option value="default">預設</option>
               <option value="distance">📍 近→遠</option>
-              <option value="price">💰 低→高</option>
+              <option value="priceLow">💰 低→高</option>
+              <option value="priceHigh">💰 高→低</option>
             </select>
             <button
               onClick={() => setIsListView(!isListView)}
