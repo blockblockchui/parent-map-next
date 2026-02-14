@@ -406,7 +406,7 @@ export default function Home() {
 
         {/* Map - Mobile: height 50% of viewport width, max 350px */}
         {showMap && (
-          <div className="bg-white border-b">
+          <div className="bg-white">
             <div className="max-w-7xl mx-auto px-4 py-4">
               <div 
                 className="relative rounded-lg overflow-hidden"

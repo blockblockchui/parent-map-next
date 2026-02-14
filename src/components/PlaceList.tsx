@@ -33,11 +33,11 @@ interface PlaceListProps {
 }
 
 const categoryLabels: Record<string, string> = {
-  playhouse: "🎪 遊樂場",
-  park: "🌳 公園",
-  museum: "🏛️ 博物館",
-  restaurant: "🍽️ 親子餐廳",
-  library: "📚 圖書館",
+  playhouse: "遊樂場",
+  park: "公園",
+  museum: "博物館",
+  restaurant: "親子餐廳",
+  library: "圖書館",
 };
 
 const priceSymbols: Record<string, string> = {
@@ -205,8 +205,12 @@ function PlaceCard({
               />
             ) : (
               <div className={`w-full h-full rounded-lg flex items-center justify-center ${categoryColor}`}>
-                <span className="text-white text-2xl">
-                  {categoryLabels[place.category]?.[0] || "🎯"}
+                <span className="text-white text-xs font-bold">
+                  {place.category === 'playhouse' ? '遊樂' :
+                   place.category === 'park' ? '公園' :
+                   place.category === 'museum' ? '博物' :
+                   place.category === 'restaurant' ? '餐廳' :
+                   place.category === 'library' ? '圖書' : '地點'}
                 </span>
               </div>
             )}
@@ -289,8 +293,12 @@ function PlaceCard({
           />
         ) : (
           <div className={`w-full h-full flex items-center justify-center ${categoryColor}`}>
-            <span className="text-white text-5xl">
-              {categoryLabels[place.category]?.[0] || "🎯"}
+            <span className="text-white text-2xl font-bold">
+              {place.category === 'playhouse' ? '遊樂' :
+               place.category === 'park' ? '公園' :
+               place.category === 'museum' ? '博物' :
+               place.category === 'restaurant' ? '餐廳' :
+               place.category === 'library' ? '圖書' : '地點'}
             </span>
           </div>
         )}
