@@ -46,7 +46,22 @@ export async function fetchRainfallNowcast(): Promise<RainfallGridPoint[]> {
       throw new Error('Failed to fetch rainfall data');
     }
     const csvText = await response.text();
-    return parseRainfallCSV(csvText);
+    const points = parseRainfallCSV(csvText);
+    
+    // Debug: log data range
+    if (points.length > 0) {
+      const lats = points.map(p => p.lat);
+      const lngs = points.map(p => p.lng);
+      console.log('Rainfall data range:', {
+        latMin: Math.min(...lats),
+        latMax: Math.max(...lats),
+        lngMin: Math.min(...lngs),
+        lngMax: Math.max(...lngs),
+        totalPoints: points.length
+      });
+    }
+    
+    return points;
   } catch (error) {
     console.error('Error fetching rainfall data:', error);
     return [];
@@ -74,6 +89,9 @@ export function getRainfallAtLocation(
 ): RainfallGridPoint | null {
   if (gridPoints.length === 0) return null;
   
+  // Log for debugging
+  console.log('Finding rainfall for:', { lat, lng, totalPoints: gridPoints.length });
+  
   let nearest = gridPoints[0];
   let minDistance = calculateDistance(lat, lng, nearest.lat, nearest.lng);
   
@@ -83,6 +101,14 @@ export function getRainfallAtLocation(
       minDistance = distance;
       nearest = point;
     }
+  }
+  
+  console.log('Nearest point:', nearest, 'Distance:', minDistance);
+  
+  // Only return if within reasonable distance (e.g., 5km)
+  if (minDistance > 5) {
+    console.warn('Nearest point too far:', minDistance, 'km');
+    return null;
   }
   
   return nearest;
@@ -163,14 +189,15 @@ export function useRainfallNowcast() {
 
     async function loadRainfall() {
       try {
-        // Check cache first (valid for 10 minutes)
+        // Check cache first (valid for 5 minutes)
         const cached = localStorage.getItem('rainfall_cache');
         const cachedTime = localStorage.getItem('rainfall_cache_time');
         const now = Date.now();
 
-        if (cached && cachedTime && (now - parseInt(cachedTime)) < 600000) {
+        if (cached && cachedTime && (now - parseInt(cachedTime)) < 300000) {
           if (mounted) {
             const data = JSON.parse(cached);
+            console.log('Using cached rainfall data:', data.length, 'points');
             setGridPoints(data);
             setLastUpdate(new Date(parseInt(cachedTime)).toLocaleTimeString('zh-HK'));
             setLoading(false);
@@ -178,6 +205,7 @@ export function useRainfallNowcast() {
           return;
         }
 
+        console.log('Fetching fresh rainfall data...');
         const data = await fetchRainfallNowcast();
         
         if (mounted) {
