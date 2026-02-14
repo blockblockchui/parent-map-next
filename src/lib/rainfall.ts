@@ -35,13 +35,12 @@ export function parseRainfallCSV(csvText: string): RainfallGridPoint[] {
   return results;
 }
 
-// Fetch rainfall nowcast data
+// Fetch rainfall nowcast data (using local API route to avoid CORS)
 export async function fetchRainfallNowcast(): Promise<RainfallGridPoint[]> {
   try {
-    const response = await fetch(
-      'https://data.weather.gov.hk/weatherAPI/hko_data/F3/Gridded_rainfall_nowcast_tc.csv',
-      { cache: 'no-store' }
-    );
+    // Use local API route to proxy the request and avoid CORS
+    const response = await fetch('/api/rainfall', { cache: 'no-store' });
+    
     if (!response.ok) {
       throw new Error('Failed to fetch rainfall data');
     }
