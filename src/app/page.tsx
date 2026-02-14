@@ -626,18 +626,6 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => setShowCarparks(!showCarparks)}
-              className={`px-3 py-2 text-lg transition-colors rounded-lg border ${
-                showCarparks 
-                  ? 'bg-green-100 border-green-400 text-green-700' 
-                  : 'bg-gray-100 border-gray-300 text-gray-500'
-              }`}
-              title="顯示停車場"
-            >
-              🅿️
-            </button>
-
-            <button
               onClick={() => setShowMap(!showMap)}
               className="px-3 py-2 text-sm font-medium transition-colors bg-blue-100 text-blue-700 border border-blue-300 rounded-lg"
             >
@@ -823,18 +811,34 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Carpark Information */}
-              {showCarparks && (
-                <div className="border-t pt-4">
-                  <CarparkList
-                    carparks={carparks}
-                    placeLat={selectedPlace.lat}
-                    placeLng={selectedPlace.lng}
-                    radiusKm={1}
-                    maxResults={5}
-                  />
-                </div>
-              )}
+              {/* Carpark Toggle & Information */}
+              <div className="border-t pt-4">
+                <button
+                  onClick={() => setShowCarparks(!showCarparks)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    showCarparks
+                      ? 'bg-green-100 text-green-700 border border-green-300'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                  }`}
+                >
+                  <span className="text-lg">🅿️</span>
+                  <span className="text-sm font-medium">
+                    {showCarparks ? '隱藏停車場' : '顯示附近停車場'}
+                  </span>
+                </button>
+
+                {showCarparks && (
+                  <div className="mt-3">
+                    <CarparkList
+                      carparks={carparks}
+                      placeLat={selectedPlace.lat}
+                      placeLng={selectedPlace.lng}
+                      radiusKm={1}
+                      maxResults={5}
+                    />
+                  </div>
+                )}
+              </div>
 
               {/* Rainfall Nowcast */}
               <div className="border-t pt-4 mt-4">
