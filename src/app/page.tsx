@@ -811,8 +811,16 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Carpark Toggle & Information */}
+              {/* Rainfall Nowcast */}
               <div className="border-t pt-4">
+                <RainfallNowcast
+                  placeLat={selectedPlace.lat}
+                  placeLng={selectedPlace.lng}
+                />
+              </div>
+
+              {/* Carpark Toggle & Information */}
+              <div className="border-t pt-4 mt-4">
                 <button
                   onClick={() => setShowCarparks(!showCarparks)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
@@ -838,14 +846,6 @@ export default function Home() {
                     />
                   </div>
                 )}
-              </div>
-
-              {/* Rainfall Nowcast */}
-              <div className="border-t pt-4 mt-4">
-                <RainfallNowcast
-                  placeLat={selectedPlace.lat}
-                  placeLng={selectedPlace.lng}
-                />
               </div>
             </div>
           </div>
