@@ -197,8 +197,9 @@ export default function Home() {
   const generateSlug = (name: string): string => {
     return name
       .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
+      .replace(/[^\w\s\u4e00-\u9fa5-]/g, "") // Keep Chinese characters
       .replace(/\s+/g, "-")
+      .replace(/-+$/, "") // Remove trailing dashes
       .substring(0, 50);
   };
 
