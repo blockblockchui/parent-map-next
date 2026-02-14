@@ -58,7 +58,6 @@ export default function Home() {
     age: "all",
     price: "all",
     indoor: "all",
-    distance: "all",
   });
   const [showMap, setShowMap] = useState(true);
 
@@ -346,7 +345,6 @@ export default function Home() {
                   age: "all",
                   price: "all",
                   indoor: "all",
-                  distance: "all",
                 })
               }
               className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
