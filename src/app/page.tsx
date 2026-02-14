@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import PlaceList from "@/components/PlaceList";
@@ -64,6 +64,8 @@ export default function Home() {
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'price'>('default');
   const [isListView, setIsListView] = useState(false);
+  const [filterBarHeight, setFilterBarHeight] = useState(60);
+  const filterBarRef = useRef<HTMLDivElement>(null);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -71,6 +73,19 @@ export default function Home() {
     if (saved) {
       setFavorites(JSON.parse(saved));
     }
+  }, []);
+
+  // Dynamic calculate filter bar height for sticky positioning
+  useEffect(() => {
+    const updateHeight = () => {
+      if (filterBarRef.current) {
+        setFilterBarHeight(filterBarRef.current.offsetHeight);
+      }
+    };
+    
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
   }, []);
 
   const toggleFavorite = (id: string) => {
@@ -299,7 +314,7 @@ export default function Home() {
       </header>
 
       {/* Sticky Filter Bar Only */}
-      <div className="sticky top-0 z-40 bg-white">
+      <div ref={filterBarRef} className="sticky top-0 z-40 bg-white">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex flex-wrap gap-2 items-center">
             <select
@@ -433,7 +448,7 @@ export default function Home() {
       )}
 
       {/* Result Header - Sticky (below filter bar) */}
-      <div className="sticky top-24 z-50 bg-gray-50 py-3 shadow-sm">
+      <div className="sticky z-50 bg-gray-50 py-3 shadow-sm" style={{ top: `${filterBarHeight}px` }}>
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm text-gray-600">{filteredPlaces.length} 個好去處</p>
