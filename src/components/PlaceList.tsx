@@ -28,9 +28,7 @@ interface PlaceListProps {
   userLocation?: { lat: number; lng: number } | null;
   favorites?: string[];
   onToggleFavorite?: (id: string) => void;
-  activeScenario?: string | null;
-  sortBy?: 'default' | 'distance' | 'price';
-  onSortChange?: (sort: 'default' | 'distance' | 'price') => void;
+  isListView?: boolean;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -70,24 +68,15 @@ function calculateWalkingTime(distanceMeters: number): { minutes: number; displa
   return { minutes, display: "🚶有啲遠" };
 }
 
-export default function PlaceList({ 
+export default function PlaceList({
   places,
   onPlaceClick,
   selectedPlaceId,
   userLocation,
   favorites = [],
   onToggleFavorite,
-  activeScenario,
-  sortBy,
-  onSortChange
+  isListView = false
 }: PlaceListProps) {
-  // Default: list view on mobile (<768px), grid on desktop
-  const [isListView, setIsListView] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 768;
-    }
-    return false;
-  });
 
   // Calculate distances for display (places already sorted by parent)
   const placesWithDistance = useMemo(() => {
@@ -111,37 +100,6 @@ export default function PlaceList({
 
   return (
     <div>
-      {/* Header - Sticky */}
-      <div className="sticky top-[60px] z-30 bg-gray-50 border-b py-3 mb-4">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm text-gray-600">搵到 {places.length} 個好去處</p>
-            {activeScenario && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                {activeScenario}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={sortBy || 'default'}
-              onChange={(e) => onSortChange?.(e.target.value as 'default' | 'distance' | 'price')}
-              className="px-2 py-1.5 border rounded-lg text-sm bg-white"
-            >
-              <option value="default">排序：預設</option>
-              <option value="distance">排序：距離近→遠</option>
-              <option value="price">排序：價格低→高</option>
-            </select>
-            <button
-              onClick={() => setIsListView(!isListView)}
-              className="px-3 py-1.5 border rounded-lg text-sm bg-white hover:bg-gray-50"
-            >
-              {isListView ? "⊞ 格狀" : "☰ 列表"}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* List */}
       <div className={isListView ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
         {placesWithDistance.map((place) => (

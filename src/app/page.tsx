@@ -63,6 +63,7 @@ export default function Home() {
   const [showMap, setShowMap] = useState(true);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'price'>('default');
+  const [isListView, setIsListView] = useState(false);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -437,8 +438,39 @@ export default function Home() {
         )}
       </div>
 
+      {/* Result Header - Sticky */}
+      <div className="sticky top-[60px] z-30 bg-gray-50 border-b py-3">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-gray-600">搵到 {filteredPlaces.length} 個好去處</p>
+            {activeScenario && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                {activeScenario}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'default' | 'distance' | 'price')}
+              className="px-2 py-1.5 border rounded-lg text-sm bg-white"
+            >
+              <option value="default">排序：預設</option>
+              <option value="distance">排序：距離近→遠</option>
+              <option value="price">排序：價格低→高</option>
+            </select>
+            <button
+              onClick={() => setIsListView(!isListView)}
+              className="px-3 py-1.5 border rounded-lg text-sm bg-white hover:bg-gray-50"
+            >
+              {isListView ? "⊞ 格狀" : "☰ 列表"}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Place List */}
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-12">
+      <div className="max-w-7xl mx-auto px-4 pb-12">
         <PlaceList
           places={filteredPlaces}
           selectedPlaceId={selectedPlaceId}
@@ -446,9 +478,7 @@ export default function Home() {
           userLocation={userLocation}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
-          activeScenario={activeScenario}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
+          isListView={isListView}
         />
       </div>
 
