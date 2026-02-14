@@ -60,12 +60,15 @@ export default function Home() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [filters, setFilters] = useState({
     regions: [] as string[],
-    category: "all",
-    age: "all",
-    price: "all",
+    categories: [] as string[],
+    ages: [] as string[],
+    prices: [] as string[],
     indoor: "all",
   });
   const [showRegionModal, setShowRegionModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showAgeModal, setShowAgeModal] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
   const [showMap, setShowMap] = useState(true);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'priceLow' | 'priceHigh'>('default');
@@ -104,17 +107,26 @@ export default function Home() {
     };
   }, [showMap]);
 
-  // Close region modal when clicking outside
+  // Close modals when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (showRegionModal && !target.closest('.region-modal-container')) {
         setShowRegionModal(false);
       }
+      if (showCategoryModal && !target.closest('.category-modal-container')) {
+        setShowCategoryModal(false);
+      }
+      if (showAgeModal && !target.closest('.age-modal-container')) {
+        setShowAgeModal(false);
+      }
+      if (showPriceModal && !target.closest('.price-modal-container')) {
+        setShowPriceModal(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showRegionModal]);
+  }, [showRegionModal, showCategoryModal, showAgeModal, showPriceModal]);
 
   const toggleFavorite = (id: string) => {
     const newFavorites = favorites.includes(id)
@@ -168,30 +180,34 @@ export default function Home() {
 
       if (filters.regions.length > 0 && !filters.regions.some(r => place.district.includes(r)))
         return false;
-      if (filters.category !== "all" && place.category !== filters.category)
+      if (filters.categories.length > 0 && !filters.categories.includes(place.category))
         return false;
       if (filters.indoor !== "all") {
         if (filters.indoor === "indoor" && !place.indoor) return false;
         if (filters.indoor === "outdoor" && place.indoor) return false;
       }
-      if (filters.age !== "all") {
-        const [minAge, maxAge] = filters.age.split("-").map((a) =>
-          a === "12+" ? 12 : parseInt(a)
-        );
-        if (maxAge) {
-          if (place.ageRange[1] < minAge || place.ageRange[0] > maxAge)
-            return false;
-        }
+      if (filters.ages.length > 0) {
+        // Check if place age range overlaps with any selected age ranges
+        const ageOverlaps = filters.ages.some(ageFilter => {
+          const [minAge, maxAge] = ageFilter.split("-").map((a) =>
+            a === "12+" ? 12 : parseInt(a)
+          );
+          if (maxAge) {
+            return !(place.ageRange[1] < minAge || place.ageRange[0] > maxAge);
+          }
+          return place.ageRange[0] <= minAge && place.ageRange[1] >= minAge;
+        });
+        if (!ageOverlaps) return false;
       }
-      if (filters.price !== "all") {
-        if (filters.price === "free" && place.priceType !== "free")
+      if (filters.prices.length > 0) {
+        const priceMatches = filters.prices.some(priceFilter => {
+          if (priceFilter === "free") return place.priceType === "free";
+          if (priceFilter === "low") return ["free", "low"].includes(place.priceType);
+          if (priceFilter === "medium") return place.priceType === "medium";
+          if (priceFilter === "high") return place.priceType === "high";
           return false;
-        if (filters.price === "low" && !["free", "low"].includes(place.priceType))
-          return false;
-        if (filters.price === "medium" && place.priceType !== "medium")
-          return false;
-        if (filters.price === "high" && !["high"].includes(place.priceType))
-          return false;
+        });
+        if (!priceMatches) return false;
       }
       return true;
     }).sort((a, b) => {
@@ -316,7 +332,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => {
-                  setFilters({ ...filters, age: "0-1" });
+                  setFilters({ ...filters, ages: ["0-1", "1-2"] });
                   setActiveScenario("👶 2歲以下");
                 }}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
@@ -329,7 +345,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => {
-                  setFilters({ ...filters, indoor: "indoor", age: "3-6" });
+                  setFilters({ ...filters, indoor: "indoor", ages: ["3-6"] });
                   setActiveScenario("🎂 生日會場地");
                 }}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
@@ -399,41 +415,172 @@ export default function Home() {
               )}
             </div>
 
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-900"
-            >
-              <option value="all">不限類型</option>
-              <option value="playhouse">遊樂場</option>
-              <option value="park">公園</option>
-              <option value="museum">博物館</option>
-            </select>
+            {/* Category Multi-select */}
+            <div className="relative category-modal-container">
+              <button
+                onClick={() => setShowCategoryModal(!showCategoryModal)}
+                className={`px-3 py-2 border rounded-lg text-sm bg-white text-gray-900 flex items-center gap-1 ${
+                  filters.categories.length > 0 ? 'border-blue-400 bg-blue-50' : ''
+                }`}
+              >
+                類型
+                {filters.categories.length > 0 && (
+                  <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {filters.categories.length}
+                  </span>
+                )}
+                <span className="ml-1">{showCategoryModal ? '▲' : '▼'}</span>
+              </button>
+              
+              {showCategoryModal && (
+                <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg p-3 z-50 min-w-[150px]">
+                  <div className="space-y-2">
+                    {[
+                      { value: 'playhouse', label: '遊樂場' },
+                      { value: 'park', label: '公園' },
+                      { value: 'museum', label: '博物館' },
+                      { value: 'restaurant', label: '親子餐廳' },
+                      { value: 'library', label: '圖書館' },
+                    ].map((cat) => (
+                      <label key={cat.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                        <input
+                          type="checkbox"
+                          checked={filters.categories.includes(cat.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFilters({ ...filters, categories: [...filters.categories, cat.value] });
+                            } else {
+                              setFilters({ ...filters, categories: filters.categories.filter(c => c !== cat.value) });
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm text-gray-900">{cat.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="border-t mt-2 pt-2 flex justify-end">
+                    <button
+                      onClick={() => setShowCategoryModal(false)}
+                      className="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      確定
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
-            <select
-              value={filters.age}
-              onChange={(e) => setFilters({ ...filters, age: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-900"
-            >
-              <option value="all">不限年齡</option>
-              <option value="0-1">0-1歲</option>
-              <option value="1-2">1-2歲</option>
-              <option value="2-3">2-3歲</option>
-              <option value="3-6">3-6歲</option>
-              <option value="6-12">6-12歲</option>
-            </select>
+            {/* Age Multi-select */}
+            <div className="relative age-modal-container">
+              <button
+                onClick={() => setShowAgeModal(!showAgeModal)}
+                className={`px-3 py-2 border rounded-lg text-sm bg-white text-gray-900 flex items-center gap-1 ${
+                  filters.ages.length > 0 ? 'border-blue-400 bg-blue-50' : ''
+                }`}
+              >
+                年齡
+                {filters.ages.length > 0 && (
+                  <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {filters.ages.length}
+                  </span>
+                )}
+                <span className="ml-1">{showAgeModal ? '▲' : '▼'}</span>
+              </button>
+              
+              {showAgeModal && (
+                <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg p-3 z-50 min-w-[150px]">
+                  <div className="space-y-2">
+                    {[
+                      { value: '0-1', label: '0-1歲' },
+                      { value: '1-2', label: '1-2歲' },
+                      { value: '2-3', label: '2-3歲' },
+                      { value: '3-6', label: '3-6歲' },
+                      { value: '6-12', label: '6-12歲' },
+                    ].map((age) => (
+                      <label key={age.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                        <input
+                          type="checkbox"
+                          checked={filters.ages.includes(age.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFilters({ ...filters, ages: [...filters.ages, age.value] });
+                            } else {
+                              setFilters({ ...filters, ages: filters.ages.filter(a => a !== age.value) });
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm text-gray-900">{age.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="border-t mt-2 pt-2 flex justify-end">
+                    <button
+                      onClick={() => setShowAgeModal(false)}
+                      className="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      確定
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
-            <select
-              value={filters.price}
-              onChange={(e) => setFilters({ ...filters, price: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-900"
-            >
-              <option value="all">不限消費</option>
-              <option value="free">免費</option>
-              <option value="low">$1-100</option>
-              <option value="medium">$100-200</option>
-              <option value="high">$200+</option>
-            </select>
+            {/* Price Multi-select */}
+            <div className="relative price-modal-container">
+              <button
+                onClick={() => setShowPriceModal(!showPriceModal)}
+                className={`px-3 py-2 border rounded-lg text-sm bg-white text-gray-900 flex items-center gap-1 ${
+                  filters.prices.length > 0 ? 'border-blue-400 bg-blue-50' : ''
+                }`}
+              >
+                消費
+                {filters.prices.length > 0 && (
+                  <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {filters.prices.length}
+                  </span>
+                )}
+                <span className="ml-1">{showPriceModal ? '▲' : '▼'}</span>
+              </button>
+              
+              {showPriceModal && (
+                <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg p-3 z-50 min-w-[150px]">
+                  <div className="space-y-2">
+                    {[
+                      { value: 'free', label: '免費' },
+                      { value: 'low', label: '$1-100' },
+                      { value: 'medium', label: '$100-200' },
+                      { value: 'high', label: '$200+' },
+                    ].map((price) => (
+                      <label key={price.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                        <input
+                          type="checkbox"
+                          checked={filters.prices.includes(price.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFilters({ ...filters, prices: [...filters.prices, price.value] });
+                            } else {
+                              setFilters({ ...filters, prices: filters.prices.filter(p => p !== price.value) });
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm text-gray-900">{price.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="border-t mt-2 pt-2 flex justify-end">
+                    <button
+                      onClick={() => setShowPriceModal(false)}
+                      className="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      確定
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <select
               value={filters.indoor}
@@ -449,9 +596,9 @@ export default function Home() {
               onClick={() => {
                 setFilters({
                   regions: [],
-                  category: "all",
-                  age: "all",
-                  price: "all",
+                  categories: [],
+                  ages: [],
+                  prices: [],
                   indoor: "all",
                 });
                 setActiveScenario(null);
