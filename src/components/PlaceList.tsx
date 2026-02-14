@@ -75,7 +75,7 @@ function calculateWalkingTime(distanceMeters: number): { minutes: number; displa
   if (minutes <= 30) {
     return { minutes, display: `約${minutes}分鐘` };
   }
-  return { minutes, display: "遠左啲" };
+  return { minutes, display: "行路有啲遠" };
 }
 
 export default function PlaceList({ 

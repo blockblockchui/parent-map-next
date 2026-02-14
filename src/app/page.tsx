@@ -221,7 +221,7 @@ export default function Home() {
     if (minutes <= 30) {
       return { minutes, display: `約${minutes}分鐘` };
     }
-    return { minutes, display: "遠左啲" };
+    return { minutes, display: "行路有啲遠" };
   };
 
   // Get distance display for a place
