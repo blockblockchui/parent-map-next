@@ -1,11 +1,3 @@
 {
-  "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    {
-      "source": "/place/:slug",
-      "destination": "/place/:slug.html"
-    }
-  ]
+  "version": 2
 }
