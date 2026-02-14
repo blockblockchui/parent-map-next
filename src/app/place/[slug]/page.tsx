@@ -35,11 +35,11 @@ interface Place {
 }
 
 const categoryLabels: Record<string, string> = {
-  playhouse: "遊樂場",
-  park: "公園",
-  museum: "博物館",
-  restaurant: "親子餐廳",
-  library: "圖書館",
+  playhouse: "🎪 遊樂場",
+  park: "🌳 公園",
+  museum: "🏛️ 博物館",
+  restaurant: "🍽️ 親子餐廳",
+  library: "📚 圖書館",
 };
 
 const priceSymbols: Record<string, string> = {
