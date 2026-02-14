@@ -27,6 +27,11 @@ interface Place {
   indoor: boolean;
   ageRange: number[];
   priceType: string;
+  priceDescription?: string;
+  description?: string;
+  address?: string;
+  tips?: string;
+  openingHours?: string;
   website?: string | null;
   facebook_url?: string | null;
   instagram_url?: string | null;
@@ -317,14 +322,14 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Sticky Filter Bar Only */}
+      {/* Sticky Filter Bar + Map */}
       <div ref={filterBarRef} className="sticky top-0 z-40 bg-white">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex flex-wrap gap-2 items-center">
             <select
               value={filters.region}
               onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-900"
             >
               <option value="all">不限地區</option>
               <option value="沙田">沙田</option>
@@ -341,7 +346,7 @@ export default function Home() {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-900"
             >
               <option value="all">不限類型</option>
               <option value="playhouse">遊樂場</option>
@@ -352,7 +357,7 @@ export default function Home() {
             <select
               value={filters.age}
               onChange={(e) => setFilters({ ...filters, age: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-900"
             >
               <option value="all">不限年齡</option>
               <option value="0-1">0-1歲</option>
@@ -365,7 +370,7 @@ export default function Home() {
             <select
               value={filters.price}
               onChange={(e) => setFilters({ ...filters, price: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-900"
             >
               <option value="all">不限消費</option>
               <option value="free">免費</option>
@@ -377,7 +382,7 @@ export default function Home() {
             <select
               value={filters.indoor}
               onChange={(e) => setFilters({ ...filters, indoor: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-900"
             >
               <option value="all">不限室內室外</option>
               <option value="indoor">室內</option>
@@ -395,61 +400,54 @@ export default function Home() {
                 });
                 setActiveScenario(null);
               }}
-              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg"
+              className="px-3 py-2 text-sm text-gray-900 hover:text-gray-700 border border-gray-200 rounded-lg bg-white"
             >
               重置篩選
             </button>
 
             <button
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                showFavoritesOnly
-                  ? "bg-red-200 text-red-700 border border-red-400"
-                  : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
-              }`}
+              className="px-3 py-2 text-lg transition-colors"
+              title="收藏地點"
             >
-              收藏地點 ({favorites.length})
+              {showFavoritesOnly ? "❤️" : "🤍"}
             </button>
 
             <button
               onClick={() => setShowMap(!showMap)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                showMap
-                  ? "bg-blue-100 text-blue-700 border border-blue-300"
-                  : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
-              }`}
+              className="px-3 py-2 text-sm font-medium transition-colors bg-blue-100 text-blue-700 border border-blue-300 rounded-lg"
             >
               {showMap ? "隱藏地圖" : "顯示地圖"}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Map - Not sticky */}
-      {showMap && (
-        <div className="bg-white">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div 
-              className="relative rounded-lg overflow-hidden"
-              style={{ height: 'clamp(250px, 50vw, 350px)' }}
-            >
-              <Map
-                places={filteredPlaces}
-                selectedPlaceId={selectedPlaceId}
-                onMarkerClick={(place) => setSelectedPlaceId(place.id)}
-                userLocation={userLocation}
-              />
-              <button
-                onClick={handleLocate}
-                className="absolute bottom-4 right-4 z-[500] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-                title="定位我的位置"
+        {/* Map - Inside sticky container */}
+        {showMap && (
+          <div className="bg-white border-t">
+            <div className="max-w-7xl mx-auto px-4 py-4">
+              <div 
+                className="relative rounded-lg overflow-hidden"
+                style={{ height: 'clamp(250px, 50vw, 350px)' }}
               >
-                定位我
-              </button>
+                <Map
+                  places={filteredPlaces}
+                  selectedPlaceId={selectedPlaceId}
+                  onMarkerClick={(place) => setSelectedPlaceId(place.id)}
+                  userLocation={userLocation}
+                />
+                <button
+                  onClick={handleLocate}
+                  className="absolute bottom-4 right-4 z-[500] bg-white text-gray-900 p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors font-medium"
+                  title="定位我的位置"
+                >
+                  定位我
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Result Header - Sticky (below filter bar) */}
       <div className="sticky z-50 bg-gray-50 py-3 shadow-sm" style={{ top: `${filterBarHeight}px` }}>
@@ -475,9 +473,10 @@ export default function Home() {
             </select>
             <button
               onClick={() => setIsListView(!isListView)}
-              className="px-3 py-1.5 border rounded-lg text-sm bg-white hover:bg-gray-50"
+              className="px-3 py-1.5 border rounded-lg text-lg bg-white hover:bg-gray-50"
+              title={isListView ? "格狀" : "列表"}
             >
-              {isListView ? "⊞ 格狀" : "☰ 列表"}
+              {isListView ? "⠿" : "☰"}
             </button>
           </div>
         </div>
@@ -507,50 +506,82 @@ export default function Home() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4">
+              {/* Header with Category & Favorite */}
               <div className="flex justify-between items-start mb-4">
-                <div>
-                  <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                    {categoryLabels[selectedPlace.category] || selectedPlace.category}
-                  </span>
-                  <h2 className="text-xl font-bold mt-2">{selectedPlace.name}</h2>
-                  <p className="text-gray-600">{selectedPlace.district}</p>
-                  {userLocation && (() => {
-                    const distInfo = getPlaceDistance(selectedPlace);
-                    if (!distInfo) return null;
-                    return (
-                      <p className="text-sm text-purple-600 mt-1">
-                        {distInfo.distance} · 步行{distInfo.walking}
-                      </p>
-                    );
-                  })()}
-                </div>
+                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                  {categoryLabels[selectedPlace.category] || selectedPlace.category}
+                </span>
                 <div className="flex gap-2 items-start">
                   <button
                     onClick={() => toggleFavorite(selectedPlace.id)}
-                    className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
-                      favorites.includes(selectedPlace.id)
-                        ? "bg-red-100 text-red-700 hover:bg-red-200"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                    className="text-2xl transition-transform hover:scale-110"
                     title={favorites.includes(selectedPlace.id) ? "取消收藏" : "加入收藏"}
                   >
-                    {favorites.includes(selectedPlace.id) ? "已收藏" : "收藏"}
+                    {favorites.includes(selectedPlace.id) ? "❤️" : "🤍"}
                   </button>
                   <button
                     onClick={() => setSelectedPlaceId(null)}
                     className="text-gray-400 hover:text-gray-600 text-xl px-2"
                   >
-                    x
+                    ×
                   </button>
                 </div>
               </div>
 
-              <div className="flex gap-2 mb-4">
+              {/* Name */}
+              <h2 className="text-xl font-bold text-gray-900 mb-2">{selectedPlace.name}</h2>
+
+              {/* Age & Description */}
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                  {selectedPlace.ageRange[0]}-{selectedPlace.ageRange[1]}歲
+                </span>
+                {selectedPlace.description && (
+                  <p className="text-sm text-gray-600 line-clamp-2">{selectedPlace.description}</p>
+                )}
+              </div>
+
+              {/* District, Address, Tips */}
+              <div className="space-y-1 mb-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">{selectedPlace.district}</span>
+                  {selectedPlace.address && (
+                    <p className="text-sm text-gray-600">{selectedPlace.address}</p>
+                  )}
+                </div>
+                {selectedPlace.tips && (
+                  <p className="text-xs text-amber-600">💡 {selectedPlace.tips}</p>
+                )}
+              </div>
+
+              {/* Opening Hours & Price */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {selectedPlace.openingHours && (
+                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">🕐 {selectedPlace.openingHours}</span>
+                )}
+                {selectedPlace.priceDescription && (
+                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">💰 {selectedPlace.priceDescription}</span>
+                )}
+              </div>
+
+              {/* Distance */}
+              {userLocation && (() => {
+                const distInfo = getPlaceDistance(selectedPlace);
+                if (!distInfo) return null;
+                return (
+                  <p className="text-sm text-purple-600 mb-4">
+                    {distInfo.distance} · 🚶{distInfo.walking}
+                  </p>
+                );
+              })()}
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPlace.lat},${selectedPlace.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 py-2 text-center bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+                  className="flex-1 py-2 text-center bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-medium"
                 >
                   路線
                 </a>
@@ -559,7 +590,7 @@ export default function Home() {
                     href={getWebsiteUrl(selectedPlace)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 py-2 text-center bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                    className="flex-1 py-2 text-center bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium"
                   >
                     {getWebsiteLabel(selectedPlace)}
                   </a>
