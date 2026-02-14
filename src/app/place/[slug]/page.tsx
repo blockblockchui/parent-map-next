@@ -68,8 +68,9 @@ export function generateStaticParams() {
 
 // Generate metadata for each place
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+  const decodedSlug = decodeURIComponent(params.slug);
   const place = locationsData.locations.find(
-    (p) => generateSlug(p.name) === params.slug
+    (p) => generateSlug(p.name) === decodedSlug
   );
   
   if (!place) {
@@ -84,10 +85,12 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-// Find place by slug
+// Find place by slug (handle URL encoding)
 const findPlaceBySlug = (slug: string): Place | undefined => {
+  // Decode URL-encoded slug (e.g., %E6%B2%99%E7%94%B0 -> 沙田)
+  const decodedSlug = decodeURIComponent(slug);
   return locationsData.locations.find(
-    (place) => generateSlug(place.name) === slug
+    (place) => generateSlug(place.name) === decodedSlug
   );
 };
 
