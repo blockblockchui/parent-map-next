@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 
 interface Place {
   id: string;
@@ -44,6 +45,15 @@ const priceSymbols: Record<string, string> = {
   low: "$",
   medium: "$$",
   high: "$$$",
+};
+
+// Generate slug from place name
+const generateSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .substring(0, 50);
 };
 
 // Calculate distance between two points (Haversine formula)
@@ -227,6 +237,13 @@ function PlaceCard({
                   <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
                     {priceSymbols[place.priceType] || place.priceType}
                   </span>
+                  <Link
+                    href={`/place/${generateSlug(place.name)}`}
+                    className="text-xs text-blue-600 hover:underline ml-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    查看詳情 →
+                  </Link>
                 </div>
               </div>
               {/* Favorite button - always visible */}
@@ -309,7 +326,13 @@ function PlaceCard({
             </button>
           )}
         </div>
-        <h3 className="font-bold text-gray-900 mt-2">{place.name}</h3>
+        <Link
+          href={`/place/${generateSlug(place.name)}`}
+          className="block"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="font-bold text-gray-900 mt-2 hover:text-blue-600 transition-colors">{place.name}</h3>
+        </Link>
         <p className="text-sm text-gray-600 mt-1">{place.district}</p>
         <div className="flex items-center gap-2 mt-2">
           <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">
@@ -318,6 +341,13 @@ function PlaceCard({
           <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
             {priceSymbols[place.priceType] || place.priceType}
           </span>
+          <Link
+            href={`/place/${generateSlug(place.name)}`}
+            className="text-xs text-blue-600 hover:underline ml-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            詳情 →
+          </Link>
         </div>
       </div>
     </div>

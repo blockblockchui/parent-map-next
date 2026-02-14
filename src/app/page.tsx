@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import PlaceList from "@/components/PlaceList";
 import locationsData from "@/data/locations.json";
 
@@ -190,6 +191,15 @@ export default function Home() {
     if (place.facebook_url) return "Facebook";
     if (place.instagram_url) return "Instagram";
     return "網站";
+  };
+
+  // Generate slug from place name
+  const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .substring(0, 50);
   };
 
   // Calculate distance between two points (Haversine formula)
@@ -393,11 +403,14 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Map - Mobile: max height 50% of viewport width */}
+        {/* Map - Mobile: height 50% of viewport width, max 350px */}
         {showMap && (
           <div className="bg-white border-b">
             <div className="max-w-7xl mx-auto px-4 py-4">
-              <div className="relative max-h-[50vw] md:max-h-[400px] overflow-hidden rounded-lg">
+              <div 
+                className="relative rounded-lg overflow-hidden"
+                style={{ height: 'clamp(250px, 50vw, 350px)' }}
+              >
                 <Map
                   places={filteredPlaces}
                   selectedPlaceId={selectedPlaceId}
@@ -479,6 +492,13 @@ export default function Home() {
               </div>
 
               <div className="flex gap-2 mb-4">
+                <Link
+                  href={`/place/${generateSlug(selectedPlace.name)}`}
+                  className="flex-1 py-2 text-center bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+                  onClick={() => setSelectedPlaceId(null)}
+                >
+                  查看詳情
+                </Link>
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPlace.lat},${selectedPlace.lng}`}
                   target="_blank"

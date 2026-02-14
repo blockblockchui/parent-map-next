@@ -45,6 +45,29 @@ function MapBounds({ places }: { places: Place[] }) {
   return null;
 }
 
+function MapResizer() {
+  const map = useMap();
+  
+  useEffect(() => {
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+    
+    // Initial invalidate after mount
+    const timer = setTimeout(handleResize, 100);
+    
+    // Listen for window resize
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [map]);
+  
+  return null;
+}
+
 function MapRef({ 
   places, 
   selectedPlaceId, 
@@ -61,6 +84,8 @@ function MapRef({
     if (mapRef.current && selectedPlaceId) {
       const place = places.find(p => p.id === selectedPlaceId);
       if (place) {
+        // Invalidate size before setting view to ensure correct centering
+        mapRef.current.invalidateSize();
         mapRef.current.setView([place.lat, place.lng], 15);
       }
     }
@@ -68,6 +93,7 @@ function MapRef({
 
   useEffect(() => {
     if (mapRef.current && userLocation) {
+      mapRef.current.invalidateSize();
       mapRef.current.setView([userLocation.lat, userLocation.lng], 14);
     }
   }, [userLocation]);
@@ -83,9 +109,10 @@ function MapRef({
       zoom={11}
       maxBounds={hongKongBounds}
       maxBoundsViscosity={0.8}
-      className="w-full h-[400px] rounded-lg z-0"
+      className="w-full h-full min-h-[250px] rounded-lg z-0"
       ref={mapRef}
     >
+      <MapResizer />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
