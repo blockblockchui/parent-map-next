@@ -17,15 +17,21 @@ interface CarparkListProps {
   maxResults?: number;
 }
 
-export default function CarparkList({ 
-  carparks, 
-  placeLat, 
-  placeLng, 
+export default function CarparkList({
+  carparks,
+  placeLat,
+  placeLng,
   radiusKm = 1,
-  maxResults = 5 
+  maxResults = 5
 }: CarparkListProps) {
   const nearbyCarparks = useMemo(() => {
-    return getNearbyCarparks<CarparkWithVacancy>(carparks, placeLat, placeLng, radiusKm).slice(0, maxResults);
+    // Filter out closed carparks and invalid vacancy data (-1)
+    const validCarparks = carparks.filter(c =>
+      c.opening_status === 'OPEN' &&
+      c.vacancy &&
+      c.vacancy.vacancy !== -1
+    );
+    return getNearbyCarparks<CarparkWithVacancy>(validCarparks, placeLat, placeLng, radiusKm).slice(0, maxResults);
   }, [carparks, placeLat, placeLng, radiusKm, maxResults]);
 
   if (nearbyCarparks.length === 0) {

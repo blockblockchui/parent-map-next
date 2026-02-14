@@ -86,6 +86,9 @@ export default function Home() {
   
   // Fetch carparks data
   const { carparks } = useCarparks();
+  
+  // Global toggle for carpark display
+  const [showCarparks, setShowCarparks] = useState(false);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -623,6 +626,18 @@ export default function Home() {
             </button>
 
             <button
+              onClick={() => setShowCarparks(!showCarparks)}
+              className={`px-3 py-2 text-lg transition-colors rounded-lg border ${
+                showCarparks 
+                  ? 'bg-green-100 border-green-400 text-green-700' 
+                  : 'bg-gray-100 border-gray-300 text-gray-500'
+              }`}
+              title="顯示停車場"
+            >
+              🅿️
+            </button>
+
+            <button
               onClick={() => setShowMap(!showMap)}
               className="px-3 py-2 text-sm font-medium transition-colors bg-blue-100 text-blue-700 border border-blue-300 rounded-lg"
             >
@@ -809,15 +824,17 @@ export default function Home() {
               </div>
 
               {/* Carpark Information */}
-              <div className="border-t pt-4">
-                <CarparkList
-                  carparks={carparks}
-                  placeLat={selectedPlace.lat}
-                  placeLng={selectedPlace.lng}
-                  radiusKm={1}
-                  maxResults={5}
-                />
-              </div>
+              {showCarparks && (
+                <div className="border-t pt-4">
+                  <CarparkList
+                    carparks={carparks}
+                    placeLat={selectedPlace.lat}
+                    placeLng={selectedPlace.lng}
+                    radiusKm={1}
+                    maxResults={5}
+                  />
+                </div>
+              )}
 
               {/* Rainfall Nowcast */}
               <div className="border-t pt-4 mt-4">
