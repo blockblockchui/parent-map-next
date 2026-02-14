@@ -25,11 +25,28 @@ export default function CarparkList({
   maxResults = 5
 }: CarparkListProps) {
   const nearbyCarparks = useMemo(() => {
+    // Debug logging
+    console.log('CarparkList received:', { 
+      totalCarparks: carparks.length, 
+      placeLat, 
+      placeLng, 
+      radiusKm 
+    });
+    
     // Filter out only invalid vacancy data (-1), keep all others
     const validCarparks = carparks.filter(c =>
       !c.vacancy || c.vacancy.vacancy !== -1
     );
-    return getNearbyCarparks<CarparkWithVacancy>(validCarparks, placeLat, placeLng, radiusKm).slice(0, maxResults);
+    console.log('After vacancy filter:', validCarparks.length);
+    
+    const nearby = getNearbyCarparks<CarparkWithVacancy>(validCarparks, placeLat, placeLng, radiusKm);
+    console.log('After distance filter (<' + radiusKm + 'km):', nearby.length);
+    
+    if (nearby.length > 0) {
+      console.log('First carpark:', nearby[0].name, 'distance:', nearby[0].distance);
+    }
+    
+    return nearby.slice(0, maxResults);
   }, [carparks, placeLat, placeLng, radiusKm, maxResults]);
 
   if (nearbyCarparks.length === 0) {

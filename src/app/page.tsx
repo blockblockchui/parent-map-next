@@ -85,7 +85,12 @@ export default function Home() {
   const filterBarRef = useRef<HTMLDivElement>(null);
   
   // Fetch carparks data
-  const { carparks } = useCarparks();
+  const { carparks, loading: carparksLoading } = useCarparks();
+  
+  // Debug: log carparks count
+  useEffect(() => {
+    console.log('Page loaded carparks:', carparks.length, 'Loading:', carparksLoading);
+  }, [carparks, carparksLoading]);
   
   // Global toggle for carpark display
   const [showCarparks, setShowCarparks] = useState(false);
