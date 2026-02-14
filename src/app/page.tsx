@@ -374,9 +374,9 @@ export default function Home() {
                     indoor: "all",
                   })
                 }
-                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg"
               >
-                重置
+                重置篩選
               </button>
 
               <button
