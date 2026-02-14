@@ -60,6 +60,7 @@ export default function Home() {
     indoor: "all",
     distance: "all",
   });
+  const [showMap, setShowMap] = useState(true);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -330,28 +331,43 @@ export default function Home() {
             >
               收藏地點 ({favorites.length})
             </button>
+
+            <button
+              onClick={() => setShowMap(!showMap)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                showMap
+                  ? "bg-blue-100 text-blue-700 border border-blue-300"
+                  : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+              }`}
+            >
+              {showMap ? "隱藏地圖" : "顯示地圖"}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Map - Mobile: max height 67% of viewport width */}
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="relative max-h-[67vw] md:max-h-none overflow-hidden rounded-lg">
-          <Map
-            places={filteredPlaces}
-            selectedPlaceId={selectedPlaceId}
-            onMarkerClick={(place) => setSelectedPlaceId(place.id)}
-            userLocation={userLocation}
-          />
-          <button
-            onClick={handleLocate}
-            className="absolute bottom-4 right-4 z-[500] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-            title="定位我的位置"
-          >
-            定位我
-          </button>
+      {/* Map - Sticky like filter, Mobile: max height 50% of viewport width */}
+      {showMap && (
+        <div className="bg-white border-b sticky top-[60px] z-30">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="relative max-h-[50vw] md:max-h-[400px] overflow-hidden rounded-lg">
+              <Map
+                places={filteredPlaces}
+                selectedPlaceId={selectedPlaceId}
+                onMarkerClick={(place) => setSelectedPlaceId(place.id)}
+                userLocation={userLocation}
+              />
+              <button
+                onClick={handleLocate}
+                className="absolute bottom-4 right-4 z-[500] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+                title="定位我的位置"
+              >
+                定位我
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Place List */}
       <div className="max-w-7xl mx-auto px-4 py-4 pb-12">
