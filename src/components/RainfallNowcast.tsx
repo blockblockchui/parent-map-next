@@ -16,8 +16,12 @@ interface RainfallNowcastProps {
 export default function RainfallNowcast({ placeLat, placeLng }: RainfallNowcastProps) {
   const { gridPoints, loading, error, lastUpdate } = useRainfallNowcast();
 
+  console.log('RainfallNowcast props:', { placeLat, placeLng, gridPointsCount: gridPoints.length, loading, error });
+
   const rainfall = useMemo(() => {
-    return getRainfallAtLocation(gridPoints, placeLat, placeLng);
+    const result = getRainfallAtLocation(gridPoints, placeLat, placeLng);
+    console.log('Rainfall lookup result:', result);
+    return result;
   }, [gridPoints, placeLat, placeLng]);
 
   if (loading) {
@@ -28,7 +32,17 @@ export default function RainfallNowcast({ placeLat, placeLng }: RainfallNowcastP
     );
   }
 
-  if (error || !rainfall) {
+  if (error) {
+    console.log('Rainfall error:', error);
+    return (
+      <div className="text-sm text-gray-400 py-2">
+        暫無降雨預測資料 (錯誤)
+      </div>
+    );
+  }
+
+  if (!rainfall) {
+    console.log('No rainfall data found for location');
     return (
       <div className="text-sm text-gray-400 py-2">
         暫無降雨預測資料
