@@ -27,6 +27,8 @@ interface PlaceListProps {
   selectedPlaceId?: string | null;
   userLocation?: { lat: number; lng: number } | null;
   sortBy?: 'default' | 'distance' | 'price';
+  favorites?: string[];
+  onToggleFavorite?: (id: string) => void;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -71,9 +73,17 @@ export default function PlaceList({
   onPlaceClick, 
   selectedPlaceId,
   userLocation,
-  sortBy = 'default'
+  sortBy = 'default',
+  favorites = [],
+  onToggleFavorite
 }: PlaceListProps) {
-  const [isListView, setIsListView] = useState(false);
+  // Default: list view on mobile (<768px), grid on desktop
+  const [isListView, setIsListView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
 
   // Calculate distances and sort
   const placesWithDistance = useMemo(() => {
@@ -123,6 +133,8 @@ export default function PlaceList({
             isSelected={selectedPlaceId === place.id}
             onClick={() => onPlaceClick?.(place)}
             userLocation={userLocation}
+            isFavorite={favorites.includes(place.id)}
+            onToggleFavorite={onToggleFavorite}
           />
         ))}
       </div>
@@ -141,12 +153,16 @@ function PlaceCard({
   isSelected,
   onClick,
   userLocation,
+  isFavorite,
+  onToggleFavorite,
 }: {
   place: PlaceWithDistance;
   isListView: boolean;
   isSelected: boolean;
   onClick: () => void;
   userLocation?: { lat: number; lng: number } | null;
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: string) => void;
 }) {
   const hasImage = place.images?.local || place.images?.cloudinary;
   const imageUrl = place.images?.local || place.images?.cloudinary;
@@ -187,28 +203,45 @@ function PlaceCard({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                {categoryLabels[place.category] || place.category}
-              </span>
-              {distanceDisplay && place.walkingTime && (
-                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                  {distanceDisplay} 🚶{place.walkingTime.display}
-                </span>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
+                    {categoryLabels[place.category] || place.category}
+                  </span>
+                  {distanceDisplay && place.walkingTime && (
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                      {distanceDisplay} 🚶{place.walkingTime.display}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-bold text-gray-900 truncate">{place.name}</h3>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{place.district}</span>
+                  <span className="text-xs">{place.indoor ? "室內" : "戶外"}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                    {place.ageRange[0]}-{place.ageRange[1]}歲
+                  </span>
+                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
+                    {priceSymbols[place.priceType] || place.priceType}
+                  </span>
+                </div>
+              </div>
+              {/* Favorite button - always visible */}
+              {onToggleFavorite && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(place.id);
+                  }}
+                  className="text-xl hover:scale-110 transition-transform flex-shrink-0 p-1"
+                  title={isFavorite ? "取消收藏" : "加入收藏"}
+                >
+                  {isFavorite ? "❤️" : "🤍"}
+                </button>
               )}
-            </div>
-            <h3 className="font-bold text-gray-900 truncate">{place.name}</h3>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{place.district}</span>
-              <span className="text-xs">{place.indoor ? "室內" : "戶外"}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                {place.ageRange[0]}-{place.ageRange[1]}歲
-              </span>
-              <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
-                {priceSymbols[place.priceType] || place.priceType}
-              </span>
             </div>
           </div>
         </div>
@@ -244,13 +277,28 @@ function PlaceCard({
       {/* Content */}
       <div className="p-4">
         <div className="flex items-start justify-between">
-          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-            {categoryLabels[place.category] || place.category}
-          </span>
-          {distanceDisplay && place.walkingTime && (
-            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-              {distanceDisplay} 🚶{place.walkingTime.display}
+          <div className="flex flex-wrap gap-1">
+            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+              {categoryLabels[place.category] || place.category}
             </span>
+            {distanceDisplay && place.walkingTime && (
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                {distanceDisplay} 🚶{place.walkingTime.display}
+              </span>
+            )}
+          </div>
+          {/* Favorite button - always visible */}
+          {onToggleFavorite && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(place.id);
+              }}
+              className="text-xl hover:scale-110 transition-transform p-1"
+              title={isFavorite ? "取消收藏" : "加入收藏"}
+            >
+              {isFavorite ? "❤️" : "🤍"}
+            </button>
           )}
         </div>
         <h3 className="font-bold text-gray-900 mt-2">{place.name}</h3>

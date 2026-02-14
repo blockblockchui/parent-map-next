@@ -334,9 +334,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Map */}
+      {/* Map - Mobile: max height 67% of viewport width */}
       <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="relative">
+        <div className="relative max-h-[67vw] md:max-h-none overflow-hidden rounded-lg">
           <Map
             places={filteredPlaces}
             selectedPlaceId={selectedPlaceId}
@@ -360,6 +360,8 @@ export default function Home() {
           selectedPlaceId={selectedPlaceId}
           onPlaceClick={(place) => setSelectedPlaceId(place.id)}
           userLocation={userLocation}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
         />
       </div>
 
