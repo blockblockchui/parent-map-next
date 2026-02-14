@@ -7,7 +7,7 @@ import PlaceMap from "./PlaceMap";
 interface Place {
   id: string;
   name: string;
-  nameEn?: string;
+  nameEn?: any;
   district: string;
   region: string;
   lat: number;
@@ -16,22 +16,22 @@ interface Place {
   indoor: boolean;
   ageRange: number[];
   priceType: string;
-  priceDescription?: string;
-  description?: string;
-  website?: string | null;
-  facebook_url?: string | null;
-  instagram_url?: string | null;
-  googleMapsUrl?: string;
-  tips?: string;
-  openingHours?: string;
-  address?: string;
+  priceDescription?: any;
+  description?: any;
+  website?: any;
+  facebook_url?: any;
+  instagram_url?: any;
+  googleMapsUrl?: any;
+  tips?: any;
+  openingHours?: any;
+  address?: any;
   hasBabyRoom?: boolean;
   hasStrollerAccess?: boolean;
   hasRestaurant?: boolean;
   rainyDaySuitable?: boolean;
   verified?: boolean;
-  updatedAt?: string;
-  checkedAt?: string;
+  updatedAt?: any;
+  checkedAt?: any;
 }
 
 const categoryLabels: Record<string, string> = {

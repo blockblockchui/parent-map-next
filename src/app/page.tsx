@@ -21,7 +21,7 @@ const Map = dynamic(() => import("@/components/Map"), {
 interface Place {
   id: string;
   name: string;
-  nameEn?: string;
+  nameEn?: any;
   district: string;
   region: string;
   lat: number;
@@ -30,14 +30,14 @@ interface Place {
   indoor: boolean;
   ageRange: number[];
   priceType: string;
-  priceDescription?: string;
-  description?: string;
-  address?: string;
-  tips?: string;
-  openingHours?: string;
-  website?: string | null;
-  facebook_url?: string | null;
-  instagram_url?: string | null;
+  priceDescription?: any;
+  description?: any;
+  address?: any;
+  tips?: any;
+  openingHours?: any;
+  website?: any;
+  facebook_url?: any;
+  instagram_url?: any;
 }
 
 const categoryLabels: Record<string, string> = {
