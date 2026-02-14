@@ -302,144 +302,141 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Sticky Header: Filters + Map */}
-      <div className="sticky top-0 z-40">
-        {/* Filters */}
+      {/* Sticky Filter Bar Only */}
+      <div className="sticky top-0 z-40 bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <select
+              value={filters.region}
+              onChange={(e) => setFilters({ ...filters, region: e.target.value })}
+              className="px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="all">不限地區</option>
+              <option value="沙田">沙田</option>
+              <option value="灣仔">灣仔</option>
+              <option value="九龍城">九龍城</option>
+              <option value="油尖旺">油尖旺</option>
+              <option value="荃灣">荃灣</option>
+              <option value="觀塘">觀塘</option>
+              <option value="屯門">屯門</option>
+              <option value="元朗">元朗</option>
+              <option value="大埔">大埔</option>
+            </select>
+
+            <select
+              value={filters.category}
+              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+              className="px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="all">不限類型</option>
+              <option value="playhouse">遊樂場</option>
+              <option value="park">公園</option>
+              <option value="museum">博物館</option>
+            </select>
+
+            <select
+              value={filters.age}
+              onChange={(e) => setFilters({ ...filters, age: e.target.value })}
+              className="px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="all">不限年齡</option>
+              <option value="0-1">0-1歲</option>
+              <option value="1-2">1-2歲</option>
+              <option value="2-3">2-3歲</option>
+              <option value="3-6">3-6歲</option>
+              <option value="6-12">6-12歲</option>
+            </select>
+
+            <select
+              value={filters.price}
+              onChange={(e) => setFilters({ ...filters, price: e.target.value })}
+              className="px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="all">不限消費</option>
+              <option value="free">免費</option>
+              <option value="low">$1-100</option>
+              <option value="medium">$100-200</option>
+              <option value="high">$200+</option>
+            </select>
+
+            <select
+              value={filters.indoor}
+              onChange={(e) => setFilters({ ...filters, indoor: e.target.value })}
+              className="px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="all">不限室內室外</option>
+              <option value="indoor">室內</option>
+              <option value="outdoor">室外</option>
+            </select>
+
+            <button
+              onClick={() =>
+                setFilters({
+                  region: "all",
+                  category: "all",
+                  age: "all",
+                  price: "all",
+                  indoor: "all",
+                })
+              }
+              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg"
+            >
+              重置篩選
+            </button>
+
+            <button
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                showFavoritesOnly
+                  ? "bg-red-200 text-red-700 border border-red-400"
+                  : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+              }`}
+            >
+              收藏地點 ({favorites.length})
+            </button>
+
+            <button
+              onClick={() => setShowMap(!showMap)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                showMap
+                  ? "bg-blue-100 text-blue-700 border border-blue-300"
+                  : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
+              }`}
+            >
+              {showMap ? "隱藏地圖" : "顯示地圖"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Map - Not sticky */}
+      {showMap && (
         <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 py-3">
-            <div className="flex flex-wrap gap-2 items-center">
-              <select
-                value={filters.region}
-                onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-                className="px-3 py-2 border rounded-lg text-sm"
-              >
-                <option value="all">不限地區</option>
-                <option value="沙田">沙田</option>
-                <option value="灣仔">灣仔</option>
-                <option value="九龍城">九龍城</option>
-                <option value="油尖旺">油尖旺</option>
-                <option value="荃灣">荃灣</option>
-                <option value="觀塘">觀塘</option>
-                <option value="屯門">屯門</option>
-                <option value="元朗">元朗</option>
-                <option value="大埔">大埔</option>
-              </select>
-
-              <select
-                value={filters.category}
-                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                className="px-3 py-2 border rounded-lg text-sm"
-              >
-                <option value="all">不限類型</option>
-                <option value="playhouse">遊樂場</option>
-                <option value="park">公園</option>
-                <option value="museum">博物館</option>
-              </select>
-
-              <select
-                value={filters.age}
-                onChange={(e) => setFilters({ ...filters, age: e.target.value })}
-                className="px-3 py-2 border rounded-lg text-sm"
-              >
-                <option value="all">不限年齡</option>
-                <option value="0-1">0-1歲</option>
-                <option value="1-2">1-2歲</option>
-                <option value="2-3">2-3歲</option>
-                <option value="3-6">3-6歲</option>
-                <option value="6-12">6-12歲</option>
-              </select>
-
-              <select
-                value={filters.price}
-                onChange={(e) => setFilters({ ...filters, price: e.target.value })}
-                className="px-3 py-2 border rounded-lg text-sm"
-              >
-                <option value="all">不限消費</option>
-                <option value="free">免費</option>
-                <option value="low">$1-100</option>
-                <option value="medium">$100-200</option>
-                <option value="high">$200+</option>
-              </select>
-
-              <select
-                value={filters.indoor}
-                onChange={(e) => setFilters({ ...filters, indoor: e.target.value })}
-                className="px-3 py-2 border rounded-lg text-sm"
-              >
-                <option value="all">不限室內室外</option>
-                <option value="indoor">室內</option>
-                <option value="outdoor">室外</option>
-              </select>
-
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div 
+              className="relative rounded-lg overflow-hidden"
+              style={{ height: 'clamp(250px, 50vw, 350px)' }}
+            >
+              <Map
+                places={filteredPlaces}
+                selectedPlaceId={selectedPlaceId}
+                onMarkerClick={(place) => setSelectedPlaceId(place.id)}
+                userLocation={userLocation}
+              />
               <button
-                onClick={() =>
-                  setFilters({
-                    region: "all",
-                    category: "all",
-                    age: "all",
-                    price: "all",
-                    indoor: "all",
-                  })
-                }
-                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg"
+                onClick={handleLocate}
+                className="absolute bottom-4 right-4 z-[500] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+                title="定位我的位置"
               >
-                重置篩選
-              </button>
-
-              <button
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  showFavoritesOnly
-                    ? "bg-red-200 text-red-700 border border-red-400"
-                    : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
-                }`}
-              >
-                收藏地點 ({favorites.length})
-              </button>
-
-              <button
-                onClick={() => setShowMap(!showMap)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  showMap
-                    ? "bg-blue-100 text-blue-700 border border-blue-300"
-                    : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200"
-                }`}
-              >
-                {showMap ? "隱藏地圖" : "顯示地圖"}
+                定位我
               </button>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Map - Mobile: height 50% of viewport width, max 350px */}
-        {showMap && (
-          <div className="bg-white">
-            <div className="max-w-7xl mx-auto px-4 py-4">
-              <div 
-                className="relative rounded-lg overflow-hidden"
-                style={{ height: 'clamp(250px, 50vw, 350px)' }}
-              >
-                <Map
-                  places={filteredPlaces}
-                  selectedPlaceId={selectedPlaceId}
-                  onMarkerClick={(place) => setSelectedPlaceId(place.id)}
-                  userLocation={userLocation}
-                />
-                <button
-                  onClick={handleLocate}
-                  className="absolute bottom-4 right-4 z-[500] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
-                  title="定位我的位置"
-                >
-                  定位我
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Result Header - Sticky */}
-      <div className="sticky top-[60px] z-30 bg-gray-50 border-b py-3">
+      {/* Result Header - Sticky (below filter bar) */}
+      <div className="sticky top-[60px] z-30 bg-gray-50 border-b py-3 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm text-gray-600">搵到 {filteredPlaces.length} 個好去處</p>
