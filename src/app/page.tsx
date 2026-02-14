@@ -62,6 +62,7 @@ export default function Home() {
   });
   const [showMap, setShowMap] = useState(true);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'default' | 'distance' | 'price'>('default');
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -149,8 +150,20 @@ export default function Home() {
           return false;
       }
       return true;
+    }).sort((a, b) => {
+      // Sort logic
+      if (sortBy === 'distance' && userLocation) {
+        const distA = calculateDistance(userLocation.lat, userLocation.lng, a.lat, a.lng);
+        const distB = calculateDistance(userLocation.lat, userLocation.lng, b.lat, b.lng);
+        return distA - distB;
+      }
+      if (sortBy === 'price') {
+        const priceOrder = { free: 0, low: 1, medium: 2, high: 3 };
+        return priceOrder[a.priceType as keyof typeof priceOrder] - priceOrder[b.priceType as keyof typeof priceOrder];
+      }
+      return 0;
     });
-  }, [places, filters, searchQuery, showFavoritesOnly, favorites]);
+  }, [places, filters, searchQuery, showFavoritesOnly, favorites, sortBy, userLocation]);
 
   const selectedPlace = places.find((p) => p.id === selectedPlaceId);
 
@@ -383,6 +396,16 @@ export default function Home() {
                 收藏地點 ({favorites.length})
               </button>
 
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'default' | 'distance' | 'price')}
+                className="px-3 py-2 border rounded-lg text-sm bg-white"
+              >
+                <option value="default">排序：預設</option>
+                <option value="distance">排序：距離近→遠</option>
+                <option value="price">排序：價格低→高</option>
+              </select>
+
               <button
                 onClick={() => setShowMap(!showMap)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -434,6 +457,7 @@ export default function Home() {
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
           activeScenario={activeScenario}
+          sortBy={sortBy}
         />
       </div>
 

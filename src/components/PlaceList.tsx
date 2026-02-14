@@ -87,9 +87,9 @@ export default function PlaceList({
     return false;
   });
 
-  // Calculate distances and sort
+  // Calculate distances for display (places already sorted by parent)
   const placesWithDistance = useMemo(() => {
-    const withDist = places.map(place => {
+    return places.map(place => {
       if (userLocation) {
         const dist = calculateDistance(userLocation.lat, userLocation.lng, place.lat, place.lng);
         const walking = calculateWalkingTime(dist);
@@ -97,12 +97,7 @@ export default function PlaceList({
       }
       return { ...place, distance: null, walkingTime: null };
     });
-
-    if (sortBy === 'distance' && userLocation) {
-      return withDist.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-    }
-    return withDist;
-  }, [places, userLocation, sortBy]);
+  }, [places, userLocation]);
 
   if (places.length === 0) {
     return (
@@ -116,11 +111,16 @@ export default function PlaceList({
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <p className="text-sm text-gray-600">搵到 {places.length} 個好去處</p>
           {activeScenario && (
             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
               {activeScenario}
+            </span>
+          )}
+          {sortBy && sortBy !== 'default' && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+              {sortBy === 'distance' ? '距離近→遠' : '價格低→高'}
             </span>
           )}
         </div>
