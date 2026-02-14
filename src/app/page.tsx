@@ -465,7 +465,7 @@ export default function Home() {
                     if (!distInfo) return null;
                     return (
                       <p className="text-sm text-purple-600 mt-1">
-                        {distInfo.distance} 🚶{distInfo.walking}
+                        {distInfo.distance} · 步行{distInfo.walking}
                       </p>
                     );
                   })()}

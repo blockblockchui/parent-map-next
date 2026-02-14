@@ -221,7 +221,7 @@ function PlaceCard({
                   </span>
                   {distanceDisplay && place.walkingTime && (
                     <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                      {distanceDisplay} 🚶{place.walkingTime.display}
+                      {distanceDisplay} · 步行{place.walkingTime.display}
                     </span>
                   )}
                 </div>
@@ -304,7 +304,7 @@ function PlaceCard({
             </span>
             {distanceDisplay && place.walkingTime && (
               <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                {distanceDisplay} 🚶{place.walkingTime.display}
+                {distanceDisplay} · 步行{place.walkingTime.display}
               </span>
             )}
           </div>
