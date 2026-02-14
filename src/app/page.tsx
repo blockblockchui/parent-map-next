@@ -59,12 +59,13 @@ export default function Home() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [filters, setFilters] = useState({
-    region: "all",
+    regions: [] as string[],
     category: "all",
     age: "all",
     price: "all",
     indoor: "all",
   });
+  const [showRegionModal, setShowRegionModal] = useState(false);
   const [showMap, setShowMap] = useState(true);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'priceLow' | 'priceHigh'>('default');
@@ -102,6 +103,18 @@ export default function Home() {
       clearTimeout(timeout);
     };
   }, [showMap]);
+
+  // Close region modal when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showRegionModal && !target.closest('.region-modal-container')) {
+        setShowRegionModal(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showRegionModal]);
 
   const toggleFavorite = (id: string) => {
     const newFavorites = favorites.includes(id)
@@ -153,7 +166,7 @@ export default function Home() {
       // Favorites filter
       if (showFavoritesOnly && !favorites.includes(place.id)) return false;
 
-      if (filters.region !== "all" && !place.district.includes(filters.region))
+      if (filters.regions.length > 0 && !filters.regions.some(r => place.district.includes(r)))
         return false;
       if (filters.category !== "all" && place.category !== filters.category)
         return false;
@@ -336,22 +349,55 @@ export default function Home() {
       <div ref={filterBarRef} className="sticky top-0 z-40 bg-white">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex flex-wrap gap-2 items-center">
-            <select
-              value={filters.region}
-              onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm bg-white text-gray-900"
-            >
-              <option value="all">不限地區</option>
-              <option value="沙田">沙田</option>
-              <option value="灣仔">灣仔</option>
-              <option value="九龍城">九龍城</option>
-              <option value="油尖旺">油尖旺</option>
-              <option value="荃灣">荃灣</option>
-              <option value="觀塘">觀塘</option>
-              <option value="屯門">屯門</option>
-              <option value="元朗">元朗</option>
-              <option value="大埔">大埔</option>
-            </select>
+            {/* Region Multi-select */}
+            <div className="relative region-modal-container">
+              <button
+                onClick={() => setShowRegionModal(!showRegionModal)}
+                className={`px-3 py-2 border rounded-lg text-sm bg-white text-gray-900 flex items-center gap-1 ${
+                  filters.regions.length > 0 ? 'border-blue-400 bg-blue-50' : ''
+                }`}
+              >
+                地區
+                {filters.regions.length > 0 && (
+                  <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {filters.regions.length}
+                  </span>
+                )}
+                <span className="ml-1">{showRegionModal ? '▲' : '▼'}</span>
+              </button>
+              
+              {showRegionModal && (
+                <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg p-3 z-50 min-w-[150px]">
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {['沙田', '灣仔', '九龍城', '油尖旺', '荃灣', '觀塘', '屯門', '元朗', '大埔'].map((region) => (
+                      <label key={region} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                        <input
+                          type="checkbox"
+                          checked={filters.regions.includes(region)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFilters({ ...filters, regions: [...filters.regions, region] });
+                            } else {
+                              setFilters({ ...filters, regions: filters.regions.filter(r => r !== region) });
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm text-gray-900">{region}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="border-t mt-2 pt-2 flex justify-end">
+                    <button
+                      onClick={() => setShowRegionModal(false)}
+                      className="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      確定
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <select
               value={filters.category}
@@ -402,7 +448,7 @@ export default function Home() {
             <button
               onClick={() => {
                 setFilters({
-                  region: "all",
+                  regions: [],
                   category: "all",
                   age: "all",
                   price: "all",
