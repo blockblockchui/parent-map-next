@@ -26,10 +26,11 @@ interface PlaceListProps {
   onPlaceClick?: (place: Place) => void;
   selectedPlaceId?: string | null;
   userLocation?: { lat: number; lng: number } | null;
-  sortBy?: 'default' | 'distance' | 'price';
   favorites?: string[];
   onToggleFavorite?: (id: string) => void;
   activeScenario?: string | null;
+  sortBy?: 'default' | 'distance' | 'price';
+  onSortChange?: (sort: 'default' | 'distance' | 'price') => void;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -70,14 +71,15 @@ function calculateWalkingTime(distanceMeters: number): { minutes: number; displa
 }
 
 export default function PlaceList({ 
-  places, 
-  onPlaceClick, 
+  places,
+  onPlaceClick,
   selectedPlaceId,
   userLocation,
-  sortBy = 'default',
   favorites = [],
   onToggleFavorite,
-  activeScenario
+  activeScenario,
+  sortBy,
+  onSortChange
 }: PlaceListProps) {
   // Default: list view on mobile (<768px), grid on desktop
   const [isListView, setIsListView] = useState(() => {
@@ -109,27 +111,35 @@ export default function PlaceList({
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm text-gray-600">搵到 {places.length} 個好去處</p>
-          {activeScenario && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-              {activeScenario}
-            </span>
-          )}
-          {sortBy && sortBy !== 'default' && (
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-              {sortBy === 'distance' ? '距離近→遠' : '價格低→高'}
-            </span>
-          )}
+      {/* Header - Sticky */}
+      <div className="sticky top-[60px] z-30 bg-gray-50 border-b py-3 mb-4">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-gray-600">搵到 {places.length} 個好去處</p>
+            {activeScenario && (
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                {activeScenario}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={sortBy || 'default'}
+              onChange={(e) => onSortChange?.(e.target.value as 'default' | 'distance' | 'price')}
+              className="px-2 py-1.5 border rounded-lg text-sm bg-white"
+            >
+              <option value="default">排序：預設</option>
+              <option value="distance">排序：距離近→遠</option>
+              <option value="price">排序：價格低→高</option>
+            </select>
+            <button
+              onClick={() => setIsListView(!isListView)}
+              className="px-3 py-1.5 border rounded-lg text-sm bg-white hover:bg-gray-50"
+            >
+              {isListView ? "⊞ 格狀" : "☰ 列表"}
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => setIsListView(!isListView)}
-          className="px-3 py-1.5 border rounded-lg text-sm bg-white hover:bg-gray-50"
-        >
-          {isListView ? "⊞ 格狀" : "☰ 列表"}
-        </button>
       </div>
 
       {/* List */}

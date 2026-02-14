@@ -396,16 +396,6 @@ export default function Home() {
                 收藏地點 ({favorites.length})
               </button>
 
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'default' | 'distance' | 'price')}
-                className="px-3 py-2 border rounded-lg text-sm bg-white"
-              >
-                <option value="default">排序：預設</option>
-                <option value="distance">排序：距離近→遠</option>
-                <option value="price">排序：價格低→高</option>
-              </select>
-
               <button
                 onClick={() => setShowMap(!showMap)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -458,6 +448,7 @@ export default function Home() {
           onToggleFavorite={toggleFavorite}
           activeScenario={activeScenario}
           sortBy={sortBy}
+          onSortChange={setSortBy}
         />
       </div>
 
