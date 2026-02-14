@@ -242,15 +242,11 @@ export default function Home() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="搜尋地點..."
-                className="flex-1 min-w-0 px-4 py-3 rounded-lg text-gray-900 text-base focus:outline-none focus:ring-4 focus:ring-blue-300"
+                className="flex-1 min-w-0 px-4 py-3 rounded-lg text-gray-900 text-base bg-white focus:outline-none focus:ring-4 focus:ring-blue-300"
               />
               <button
-                onClick={() => setSearchQuery("")}
-                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
-                  searchQuery
-                    ? "bg-yellow-400 text-yellow-900 hover:bg-yellow-500"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
-                }`}
+                onClick={() => searchQuery ? setSearchQuery("") : {}}
+                className="px-4 py-3 rounded-lg font-medium transition-colors bg-yellow-400 text-yellow-900 hover:bg-yellow-500"
               >
                 {searchQuery ? "清除" : "搜尋"}
               </button>
@@ -370,15 +366,16 @@ export default function Home() {
             </select>
 
             <button
-              onClick={() =>
+              onClick={() => {
                 setFilters({
                   region: "all",
                   category: "all",
                   age: "all",
                   price: "all",
                   indoor: "all",
-                })
-              }
+                });
+                setActiveScenario(null);
+              }}
               className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg"
             >
               重置篩選
@@ -436,10 +433,10 @@ export default function Home() {
       )}
 
       {/* Result Header - Sticky (below filter bar) */}
-      <div className="sticky top-[60px] z-30 bg-gray-50 py-3 shadow-sm">
+      <div className="sticky top-24 z-50 bg-gray-50 py-3 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm text-gray-600">搵到 {filteredPlaces.length} 個好去處</p>
+            <p className="text-sm text-gray-600">{filteredPlaces.length} 個好去處</p>
             {activeScenario && (
               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                 {activeScenario}
@@ -452,9 +449,9 @@ export default function Home() {
               onChange={(e) => setSortBy(e.target.value as 'default' | 'distance' | 'price')}
               className="px-2 py-1.5 border rounded-lg text-sm bg-white"
             >
-              <option value="default">排序：預設</option>
-              <option value="distance">排序：距離近→遠</option>
-              <option value="price">排序：價格低→高</option>
+              <option value="default">預設</option>
+              <option value="distance">📍 近→遠</option>
+              <option value="price">💰 低→高</option>
             </select>
             <button
               onClick={() => setIsListView(!isListView)}

@@ -93,7 +93,7 @@ export default function PlaceList({
   if (places.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
-        <p>暫時搵不到符合條件的地點</p>
+        <p>暫時沒有符合條件的地點</p>
       </div>
     );
   }
