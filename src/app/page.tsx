@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import PlaceList from "@/components/PlaceList";
 import CarparkList from "@/components/CarparkList";
+import RainfallNowcast from "@/components/RainfallNowcast";
 import locationsData from "@/data/locations.json";
 import { useCarparks } from "@/lib/carpark";
 
@@ -815,6 +816,14 @@ export default function Home() {
                   placeLng={selectedPlace.lng}
                   radiusKm={1}
                   maxResults={5}
+                />
+              </div>
+
+              {/* Rainfall Nowcast */}
+              <div className="border-t pt-4 mt-4">
+                <RainfallNowcast
+                  placeLat={selectedPlace.lat}
+                  placeLng={selectedPlace.lng}
                 />
               </div>
             </div>
