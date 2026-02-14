@@ -21,7 +21,25 @@ export interface Carpark {
   };
 }
 
+export interface CarparkVacancy {
+  park_Id: string;
+  vacancy: number;
+  vacancyEV?: number;
+  vacancyDIS?: number;
+  lastupdate: string;
+}
+
+export interface CarparkWithVacancy extends Carpark {
+  vacancy?: CarparkVacancy;
+}
+
 export interface CarparkWithDistance extends Carpark {
+  distance: number;
+  distanceDisplay: string;
+  walkingTime: string;
+}
+
+export interface CarparkWithVacancyAndDistance extends CarparkWithVacancy {
   distance: number;
   distanceDisplay: string;
   walkingTime: string;
@@ -90,12 +108,12 @@ export async function fetchCarparks(): Promise<Carpark[]> {
 }
 
 // Get nearby carparks within radius (km)
-export function getNearbyCarparks(
-  carparks: Carpark[],
+export function getNearbyCarparks<T extends Carpark>(
+  carparks: T[],
   centerLat: number,
   centerLng: number,
   radiusKm: number = 1
-): CarparkWithDistance[] {
+): (T & { distance: number; distanceDisplay: string; walkingTime: string })[] {
   return carparks
     .map(carpark => {
       const distance = calculateDistance(
@@ -141,9 +159,48 @@ export function getHeightLimit(carpark: Carpark): string | null {
   return null;
 }
 
-// Hook to fetch and cache carparks
+// Fetch vacancy data for all carparks
+export async function fetchCarparkVacancies(): Promise<CarparkVacancy[]> {
+  try {
+    const response = await fetch(
+      'https://api.data.gov.hk/v1/carpark-info-vacancy?data=vacancy&vehicleTypes=privateCar&lang=zh_TW'
+    );
+    if (!response.ok) {
+      throw new Error('Failed to fetch carpark vacancies');
+    }
+    const data = await response.json();
+    
+    return (data.results || []).map((item: any) => {
+      const privateCar = item.privateCar?.[0];
+      return {
+        park_Id: item.park_Id,
+        vacancy: privateCar?.vacancy ?? 0,
+        vacancyEV: privateCar?.vacancyEV,
+        vacancyDIS: privateCar?.vacancyDIS,
+        lastupdate: privateCar?.lastupdate,
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching carpark vacancies:', error);
+    return [];
+  }
+}
+
+// Merge carparks with vacancy data
+export function mergeCarparksWithVacancies(
+  carparks: Carpark[],
+  vacancies: CarparkVacancy[]
+): CarparkWithVacancy[] {
+  const vacancyMap = new Map(vacancies.map(v => [v.park_Id, v]));
+  return carparks.map(carpark => ({
+    ...carpark,
+    vacancy: vacancyMap.get(carpark.park_Id),
+  }));
+}
+
+// Hook to fetch and cache carparks with vacancies
 export function useCarparks() {
-  const [carparks, setCarparks] = useState<Carpark[]>([]);
+  const [carparks, setCarparks] = useState<CarparkWithVacancy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -152,12 +209,12 @@ export function useCarparks() {
 
     async function loadCarparks() {
       try {
-        // Check cache first (valid for 1 hour)
+        // Check cache first (valid for 5 minutes for vacancy data)
         const cached = localStorage.getItem('carparks_cache');
         const cachedTime = localStorage.getItem('carparks_cache_time');
         const now = Date.now();
 
-        if (cached && cachedTime && (now - parseInt(cachedTime)) < 3600000) {
+        if (cached && cachedTime && (now - parseInt(cachedTime)) < 300000) {
           if (mounted) {
             setCarparks(JSON.parse(cached));
             setLoading(false);
@@ -165,11 +222,17 @@ export function useCarparks() {
           return;
         }
 
-        const data = await fetchCarparks();
+        // Fetch both carpark info and vacancy data in parallel
+        const [carparksData, vacanciesData] = await Promise.all([
+          fetchCarparks(),
+          fetchCarparkVacancies(),
+        ]);
+        
+        const mergedData = mergeCarparksWithVacancies(carparksData, vacanciesData);
         
         if (mounted) {
-          setCarparks(data);
-          localStorage.setItem('carparks_cache', JSON.stringify(data));
+          setCarparks(mergedData);
+          localStorage.setItem('carparks_cache', JSON.stringify(mergedData));
           localStorage.setItem('carparks_cache_time', now.toString());
           setLoading(false);
         }
