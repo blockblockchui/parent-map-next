@@ -74,6 +74,7 @@ export default function Home() {
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [showMap, setShowMap] = useState(true);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
+  const [mapZoomTrigger, setMapZoomTrigger] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'priceLow' | 'priceHigh'>('default');
   const [isListView, setIsListView] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -178,6 +179,8 @@ export default function Home() {
           lng: position.coords.longitude,
         };
         setUserLocation(newLocation);
+        // Trigger zoom to 13 after getting location
+        setMapZoomTrigger(13);
       },
       (error) => {
         console.error("Geolocation error:", error);
@@ -654,6 +657,8 @@ export default function Home() {
                   selectedPlaceId={selectedPlaceId}
                   onMarkerClick={(place) => setSelectedPlaceId(place.id)}
                   userLocation={userLocation}
+                  zoomTrigger={mapZoomTrigger}
+                  onZoomTriggered={() => setMapZoomTrigger(null)}
                 />
                 <button
                   onClick={handleLocate}

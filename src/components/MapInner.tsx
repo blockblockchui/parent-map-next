@@ -19,6 +19,8 @@ interface MapInnerProps {
   selectedPlaceId?: string | null;
   onMarkerClick?: (place: Place) => void;
   userLocation?: { lat: number; lng: number } | null;
+  zoomTrigger?: number | null;
+  onZoomTriggered?: () => void;
 }
 
 // Minimum zoom level to show pins
@@ -197,7 +199,9 @@ function MapRef({
   places, 
   selectedPlaceId, 
   onMarkerClick,
-  userLocation
+  userLocation,
+  zoomTrigger,
+  onZoomTriggered
 }: MapInnerProps) {
   const mapRef = useRef<L.Map | null>(null);
 
@@ -234,6 +238,14 @@ function MapRef({
       mapRef.current.setView([userLocation.lat, userLocation.lng], Math.max(zoom, MIN_ZOOM_FOR_PINS));
     }
   }, [userLocation, zoom]);
+
+  // Handle zoom trigger from parent (e.g., when clicking "取得定位")
+  useEffect(() => {
+    if (mapRef.current && zoomTrigger) {
+      mapRef.current.setZoom(zoomTrigger);
+      onZoomTriggered?.();
+    }
+  }, [zoomTrigger, onZoomTriggered]);
 
   const hongKongBounds = L.latLngBounds(
     [22.15, 113.75],
