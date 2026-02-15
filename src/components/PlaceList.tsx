@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useImperativeHandle, forwardRef } from "react";
 
 interface Place {
   id: string;
@@ -68,7 +68,11 @@ function calculateWalkingTime(distanceMeters: number): { minutes: number; displa
   return { minutes, display: "🚶有啲遠" };
 }
 
-export default function PlaceList({
+export interface PlaceListRef {
+  scrollToFirst: () => void;
+}
+
+const PlaceList = forwardRef<PlaceListRef, PlaceListProps>(function PlaceList({
   places,
   onPlaceClick,
   selectedPlaceId,
@@ -76,7 +80,14 @@ export default function PlaceList({
   favorites = [],
   onToggleFavorite,
   isListView = false
-}: PlaceListProps) {
+}: PlaceListProps, ref) {
+  const firstCardRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    scrollToFirst: () => {
+      firstCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }));
 
   // Calculate distances for display (places already sorted by parent)
   const placesWithDistance = useMemo(() => {
@@ -103,23 +114,26 @@ export default function PlaceList({
       {/* List */}
       <div className={isListView ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
         {placesWithDistance.map((place, index) => (
-          <PlaceCard
-            key={place.id}
-            place={place}
-            index={index + 1}
-            total={placesWithDistance.length}
-            isListView={isListView}
-            isSelected={selectedPlaceId === place.id}
-            onClick={() => onPlaceClick?.(place)}
-            userLocation={userLocation}
-            isFavorite={favorites.includes(place.id)}
-            onToggleFavorite={onToggleFavorite}
-          />
+          <div key={place.id} ref={index === 0 ? firstCardRef : undefined}>
+            <PlaceCard
+              place={place}
+              index={index + 1}
+              total={placesWithDistance.length}
+              isListView={isListView}
+              isSelected={selectedPlaceId === place.id}
+              onClick={() => onPlaceClick?.(place)}
+              userLocation={userLocation}
+              isFavorite={favorites.includes(place.id)}
+              onToggleFavorite={onToggleFavorite}
+            />
+          </div>
         ))}
       </div>
     </div>
   );
-}
+});
+
+export default PlaceList;
 
 interface PlaceWithDistance extends Place {
   distance: number | null;
