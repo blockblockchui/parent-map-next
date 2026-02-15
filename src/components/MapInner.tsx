@@ -206,10 +206,21 @@ function MapViewController({
 }) {
   const map = useMap();
   const { zoom } = useMapViewport();
+  const lastLocateTriggerRef = useRef<number>(0);
 
-  // Center on selected place
+  // Handle locate action from parent (e.g., when clicking "取得定位")
+  // This fires every time locateAction changes, using the position from the action itself
   useEffect(() => {
-    if (selectedPlaceId) {
+    if (locateAction && locateAction.trigger !== lastLocateTriggerRef.current) {
+      lastLocateTriggerRef.current = locateAction.trigger;
+      map.invalidateSize();
+      map.setView([locateAction.lat, locateAction.lng], MIN_ZOOM_FOR_PINS);
+    }
+  }, [locateAction, map]);
+
+  // Center on selected place - only if no recent locate action
+  useEffect(() => {
+    if (selectedPlaceId && (!locateAction || locateAction.trigger === lastLocateTriggerRef.current)) {
       const place = places.find(p => p.id === selectedPlaceId);
       if (place) {
         map.invalidateSize();
@@ -217,16 +228,7 @@ function MapViewController({
         map.setView([place.lat, place.lng], targetZoom);
       }
     }
-  }, [selectedPlaceId, places, map, zoom]);
-
-  // Handle locate action from parent (e.g., when clicking "取得定位")
-  // This fires every time locateAction changes, using the position from the action itself
-  useEffect(() => {
-    if (locateAction) {
-      map.invalidateSize();
-      map.setView([locateAction.lat, locateAction.lng], MIN_ZOOM_FOR_PINS);
-    }
-  }, [locateAction, map]);
+  }, [selectedPlaceId, places, map, zoom, locateAction]);
 
   return null;
 }
