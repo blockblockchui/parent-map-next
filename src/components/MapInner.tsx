@@ -111,7 +111,7 @@ function useMapViewport() {
   return { center, zoom };
 }
 
-// Filter places based on zoom level and distance from reference point
+// Filter places based on zoom level and distance from map center
 function useFilteredPlaces(
   places: Place[],
   mapCenter: { lat: number; lng: number },
@@ -119,12 +119,10 @@ function useFilteredPlaces(
   zoom: number,
   selectedPlaceId: string | null | undefined,
   useMapCenterAsRef: boolean
-): { filteredPlaces: Place[]; shouldShowZoomHint: boolean; referencePoint: { lat: number; lng: number } } {
+): { filteredPlaces: Place[]; shouldShowZoomHint: boolean } {
   return useMemo(() => {
-    // Determine reference point (map center or user location)
-    const referencePoint = (useMapCenterAsRef || !userLocation) 
-      ? mapCenter 
-      : userLocation;
+    // Always use map center as reference point
+    const referencePoint = mapCenter;
     
     // Always show selected place
     const selectedPlace = selectedPlaceId ? places.find(p => p.id === selectedPlaceId) : null;
@@ -133,8 +131,7 @@ function useFilteredPlaces(
     if (zoom < MIN_ZOOM_FOR_PINS) {
       return {
         filteredPlaces: selectedPlace ? [selectedPlace] : [],
-        shouldShowZoomHint: !selectedPlace || places.length > 1,
-        referencePoint
+        shouldShowZoomHint: !selectedPlace || places.length > 1
       };
     }
     
@@ -162,8 +159,7 @@ function useFilteredPlaces(
     
     return {
       filteredPlaces: limitedPlaces,
-      shouldShowZoomHint: false,
-      referencePoint
+      shouldShowZoomHint: false
     };
   }, [places, mapCenter, userLocation, zoom, selectedPlaceId, useMapCenterAsRef]);
 }
@@ -199,13 +195,11 @@ function ZoomHintOverlay({ visible }: { visible: boolean }) {
 function PinCountIndicator({ 
   total, 
   visible, 
-  zoom,
-  isCenterBased
+  zoom
 }: { 
   total: number; 
   visible: number; 
   zoom: number;
-  isCenterBased?: boolean;
 }) {
   return (
     <div className="absolute top-3 right-3 z-[400] bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md text-xs">
@@ -214,45 +208,9 @@ function PinCountIndicator({
       </span>
       {zoom >= MIN_ZOOM_FOR_PINS && (
         <span className="text-gray-500 ml-1">
-          ({isCenterBased ? '地圖中心' : '定位'}4km內{visible >= MAX_PLACES_ON_MAP ? '·最多顯示50個' : ''})
+          (4km內{visible >= MAX_PLACES_ON_MAP ? '·最多顯示50個' : ''})
         </span>
       )}
-    </div>
-  );
-}
-
-// Center crosshair component - shows the reference point for distance calculation
-function CenterCrosshair() {
-  return (
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[500] pointer-events-none">
-      <div className="relative">
-        {/* Crosshair lines */}
-        <div className="absolute w-8 h-0.5 bg-gray-800/80 -translate-x-1/2 left-1/2 top-1/2" />
-        <div className="absolute h-8 w-0.5 bg-gray-800/80 -translate-y-1/2 left-1/2 top-1/2" />
-        {/* Center dot */}
-        <div className="w-2.5 h-2.5 bg-blue-600 rounded-full -translate-x-1/2 -translate-y-1/2" />
-      </div>
-    </div>
-  );
-}
-
-// Toggle for using map center vs user location as reference point
-function ReferenceToggle({ 
-  useMapCenter, 
-  onToggle 
-}: { 
-  useMapCenter: boolean; 
-  onToggle: () => void;
-}) {
-  return (
-    <div className="absolute top-4 left-4 z-[400] bg-white/95 backdrop-blur-sm rounded-lg shadow-md px-3 py-2">
-      <button
-        onClick={onToggle}
-        className="flex items-center gap-2 text-xs font-medium text-gray-700 hover:text-gray-900"
-      >
-        <span className={`w-2 h-2 rounded-full ${useMapCenter ? 'bg-blue-500' : 'bg-green-500'}`} />
-        {useMapCenter ? '📍 以地圖中心搜索' : '📍 以我的位置搜索'}
-      </button>
     </div>
   );
 }
@@ -335,17 +293,14 @@ function MapRef({
     onCenterChange?.(center);
   }, [center, onCenterChange]);
   
-  // Toggle between using map center or user location as reference point
-  const [useMapCenterAsRef, setUseMapCenterAsRef] = useState(true);
-  
-  // Filter places based on zoom and distance
-  const { filteredPlaces, shouldShowZoomHint, referencePoint } = useFilteredPlaces(
+  // Filter places based on zoom and distance - always use map center
+  const { filteredPlaces, shouldShowZoomHint } = useFilteredPlaces(
     places, 
     center,
     userLocation,
     zoom, 
     selectedPlaceId,
-    useMapCenterAsRef
+    true // always use map center
   );
 
   const hongKongBounds = L.latLngBounds(
@@ -399,23 +354,11 @@ function MapRef({
       {/* Zoom hint overlay */}
       <ZoomHintOverlay visible={shouldShowZoomHint} />
       
-      {/* Center crosshair - shows reference point for distance calculation */}
-      <CenterCrosshair />
-      
-      {/* Reference point toggle */}
-      {userLocation && (
-        <ReferenceToggle 
-          useMapCenter={useMapCenterAsRef} 
-          onToggle={() => setUseMapCenterAsRef(!useMapCenterAsRef)}
-        />
-      )}
-      
       {/* Pin count indicator */}
       <PinCountIndicator 
         total={places.length} 
         visible={filteredPlaces.length} 
         zoom={zoom}
-        isCenterBased={useMapCenterAsRef}
       />
     </>
   );

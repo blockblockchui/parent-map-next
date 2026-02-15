@@ -669,9 +669,9 @@ export default function Home() {
         {/* Map - Inside sticky container */}
         {showMap && (
           <div className="bg-white border-t">
-            <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="w-full sm:max-w-7xl sm:mx-auto sm:px-4 py-0 sm:py-4">
               <div 
-                className="relative rounded-lg overflow-hidden"
+                className="relative sm:rounded-lg overflow-hidden"
                 style={{ 
                   height: 'clamp(200px, 40vw, 350px)'
                 }}
@@ -724,6 +724,8 @@ export default function Home() {
                 onClick={() => {
                   setListCenter(mapCenter);
                   setHasMapMoved(false);
+                  // Scroll to top of place list
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                   hasMapMoved
