@@ -85,7 +85,9 @@ const PlaceList = forwardRef<PlaceListRef, PlaceListProps>(function PlaceList({
 
   useImperativeHandle(ref, () => ({
     scrollToFirst: () => {
-      firstCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Scroll to show first card below sticky headers
+      // Use 'center' to avoid being covered by sticky header
+      firstCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }));
 
