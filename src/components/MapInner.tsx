@@ -226,26 +226,21 @@ function MapRef({
       const place = places.find(p => p.id === selectedPlaceId);
       if (place) {
         mapRef.current.invalidateSize();
-        mapRef.current.setView([place.lat, place.lng], Math.max(zoom, MIN_ZOOM_FOR_PINS));
+        // Only change zoom if currently below minimum, otherwise keep current zoom
+        const targetZoom = zoom < MIN_ZOOM_FOR_PINS ? MIN_ZOOM_FOR_PINS : zoom;
+        mapRef.current.setView([place.lat, place.lng], targetZoom);
       }
     }
-  }, [selectedPlaceId, places, zoom]);
-
-  // Center on user location
-  useEffect(() => {
-    if (mapRef.current && userLocation) {
-      mapRef.current.invalidateSize();
-      mapRef.current.setView([userLocation.lat, userLocation.lng], Math.max(zoom, MIN_ZOOM_FOR_PINS));
-    }
-  }, [userLocation, zoom]);
+  }, [selectedPlaceId, places]);
 
   // Handle zoom trigger from parent (e.g., when clicking "取得定位")
   useEffect(() => {
-    if (mapRef.current && zoomTrigger) {
-      mapRef.current.setZoom(zoomTrigger);
+    if (mapRef.current && zoomTrigger && userLocation) {
+      mapRef.current.invalidateSize();
+      mapRef.current.setView([userLocation.lat, userLocation.lng], zoomTrigger);
       onZoomTriggered?.();
     }
-  }, [zoomTrigger, onZoomTriggered]);
+  }, [zoomTrigger, userLocation, onZoomTriggered]);
 
   const hongKongBounds = L.latLngBounds(
     [22.15, 113.75],
