@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -21,6 +21,11 @@ interface MapInnerProps {
   userLocation?: { lat: number; lng: number } | null;
 }
 
+// Minimum zoom level to show pins
+const MIN_ZOOM_FOR_PINS = 13;
+// Radius in km to show pins when zoomed in
+const SHOW_RADIUS_KM = 2;
+
 // Fix Leaflet default icon
 function fixLeafletIcon() {
   // @ts-ignore
@@ -30,6 +35,123 @@ function fixLeafletIcon() {
     iconUrl: "/marker-icon.png",
     shadowUrl: "/marker-shadow.png",
   });
+}
+
+// Calculate distance between two points in km
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Hook to track map center and zoom
+function useMapViewport() {
+  const [center, setCenter] = useState<{ lat: number; lng: number }>({ lat: 22.32, lng: 114.17 });
+  const [zoom, setZoom] = useState<number>(11);
+  
+  const map = useMap();
+  
+  useMapEvents({
+    moveend: () => {
+      const c = map.getCenter();
+      setCenter({ lat: c.lat, lng: c.lng });
+    },
+    zoomend: () => {
+      setZoom(map.getZoom());
+    },
+  });
+  
+  useEffect(() => {
+    const c = map.getCenter();
+    setCenter({ lat: c.lat, lng: c.lng });
+    setZoom(map.getZoom());
+  }, [map]);
+  
+  return { center, zoom };
+}
+
+// Filter places based on zoom level and distance from center
+function useFilteredPlaces(
+  places: Place[],
+  center: { lat: number; lng: number },
+  zoom: number,
+  selectedPlaceId: string | null | undefined
+): { filteredPlaces: Place[]; shouldShowZoomHint: boolean } {
+  return useMemo(() => {
+    // Always show selected place
+    const selectedPlace = selectedPlaceId ? places.find(p => p.id === selectedPlaceId) : null;
+    
+    // If zoom is too low, only show selected place
+    if (zoom < MIN_ZOOM_FOR_PINS) {
+      return {
+        filteredPlaces: selectedPlace ? [selectedPlace] : [],
+        shouldShowZoomHint: !selectedPlace || places.length > 1
+      };
+    }
+    
+    // Zoom is sufficient, show places within radius + selected place
+    const placesInRadius = places.filter(place => {
+      // Always include selected place
+      if (place.id === selectedPlaceId) return true;
+      
+      const distance = calculateDistance(center.lat, center.lng, place.lat, place.lng);
+      return distance <= SHOW_RADIUS_KM;
+    });
+    
+    return {
+      filteredPlaces: placesInRadius,
+      shouldShowZoomHint: false
+    };
+  }, [places, center, zoom, selectedPlaceId]);
+}
+
+// Zoom hint overlay component
+function ZoomHintOverlay({ visible, onZoomIn }: { visible: boolean; onZoomIn: () => void }) {
+  if (!visible) return null;
+  
+  return (
+    <div className="absolute inset-0 z-[400] flex items-center justify-center pointer-events-none">
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl px-6 py-4 mx-4 text-center pointer-events-auto">
+        <div className="text-4xl mb-2">🔍</div>
+        <p className="text-gray-800 font-medium mb-1">放大地圖以查看地點</p>
+        <p className="text-gray-500 text-sm mb-3">縮放至更近以顯示附近親子地點</p>
+        <button
+          onClick={onZoomIn}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+        >
+          放大 +
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Pin count indicator
+function PinCountIndicator({ 
+  total, 
+  visible, 
+  zoom 
+}: { 
+  total: number; 
+  visible: number; 
+  zoom: number;
+}) {
+  return (
+    <div className="absolute top-3 right-3 z-[400] bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md text-xs">
+      <span className="font-medium text-gray-800">
+        {zoom < MIN_ZOOM_FOR_PINS ? '📍' : `📍 ${visible} / ${total}`}
+      </span>
+      {zoom >= MIN_ZOOM_FOR_PINS && (
+        <span className="text-gray-500 ml-1">(2km內)</span>
+      )}
+    </div>
+  );
 }
 
 function MapBounds({ places }: { places: Place[] }) {
@@ -53,10 +175,7 @@ function MapResizer() {
       map.invalidateSize();
     };
     
-    // Initial invalidate after mount
     const timer = setTimeout(handleResize, 100);
-    
-    // Listen for window resize
     window.addEventListener('resize', handleResize);
     
     return () => {
@@ -80,23 +199,42 @@ function MapRef({
     fixLeafletIcon();
   }, []);
 
+  // Track viewport changes
+  const { center, zoom } = useMapViewport();
+  
+  // Filter places based on zoom and distance
+  const { filteredPlaces, shouldShowZoomHint } = useFilteredPlaces(
+    places, 
+    center, 
+    zoom, 
+    selectedPlaceId
+  );
+
+  // Handle zoom in button
+  const handleZoomIn = () => {
+    if (mapRef.current) {
+      mapRef.current.setZoom(MIN_ZOOM_FOR_PINS);
+    }
+  };
+
+  // Center on selected place
   useEffect(() => {
     if (mapRef.current && selectedPlaceId) {
       const place = places.find(p => p.id === selectedPlaceId);
       if (place) {
-        // Invalidate size before setting view to ensure correct centering
         mapRef.current.invalidateSize();
-        mapRef.current.setView([place.lat, place.lng], 15);
+        mapRef.current.setView([place.lat, place.lng], Math.max(zoom, MIN_ZOOM_FOR_PINS));
       }
     }
-  }, [selectedPlaceId, places]);
+  }, [selectedPlaceId, places, zoom]);
 
+  // Center on user location
   useEffect(() => {
     if (mapRef.current && userLocation) {
       mapRef.current.invalidateSize();
-      mapRef.current.setView([userLocation.lat, userLocation.lng], 14);
+      mapRef.current.setView([userLocation.lat, userLocation.lng], Math.max(zoom, MIN_ZOOM_FOR_PINS));
     }
-  }, [userLocation]);
+  }, [userLocation, zoom]);
 
   const hongKongBounds = L.latLngBounds(
     [22.15, 113.75],
@@ -104,14 +242,7 @@ function MapRef({
   );
 
   return (
-    <MapContainer
-      center={[22.32, 114.17]}
-      zoom={11}
-      maxBounds={hongKongBounds}
-      maxBoundsViscosity={0.8}
-      className="w-full h-full min-h-[250px] rounded-lg z-0"
-      ref={mapRef}
-    >
+    <>
       <MapResizer />
       <TileLayer
         attribution='© 地圖資料由地政總署提供'
@@ -120,13 +251,16 @@ function MapRef({
         maxZoom={20}
       />
       <MapBounds places={places} />
-      {places.map((place) => (
+      
+      {/* Filtered place markers */}
+      {filteredPlaces.map((place) => (
         <Marker
           key={place.id}
           position={[place.lat, place.lng]}
           eventHandlers={{
             click: () => onMarkerClick?.(place),
           }}
+          opacity={place.id === selectedPlaceId ? 1 : 0.8}
         >
           <Popup>
             <div className="font-sans">
@@ -136,6 +270,8 @@ function MapRef({
           </Popup>
         </Marker>
       ))}
+      
+      {/* User location marker */}
       {userLocation && (
         <Marker
           position={[userLocation.lat, userLocation.lng]}
@@ -153,10 +289,35 @@ function MapRef({
           </Popup>
         </Marker>
       )}
-    </MapContainer>
+      
+      {/* Zoom hint overlay */}
+      <ZoomHintOverlay visible={shouldShowZoomHint} onZoomIn={handleZoomIn} />
+      
+      {/* Pin count indicator */}
+      <PinCountIndicator 
+        total={places.length} 
+        visible={filteredPlaces.length} 
+        zoom={zoom}
+      />
+    </>
   );
 }
 
 export default function MapInner(props: MapInnerProps) {
-  return <MapRef {...props} />;
+  const hongKongBounds = L.latLngBounds(
+    [22.15, 113.75],
+    [22.55, 114.45]
+  );
+  
+  return (
+    <MapContainer
+      center={[22.32, 114.17]}
+      zoom={11}
+      maxBounds={hongKongBounds}
+      maxBoundsViscosity={0.8}
+      className="w-full h-full min-h-[250px] rounded-lg z-0"
+    >
+      <MapRef {...props} />
+    </MapContainer>
+  );
 }
