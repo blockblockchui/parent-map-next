@@ -114,8 +114,10 @@ function MapRef({
     >
       <MapResizer />
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='© 地圖資料由地政總署提供'
+        url="https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/basemap/wgs84/{z}/{x}/{y}.png"
+        minZoom={10}
+        maxZoom={20}
       />
       <MapBounds places={places} />
       {places.map((place) => (
