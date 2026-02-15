@@ -24,8 +24,10 @@ interface MapInnerProps {
 
 // Minimum zoom level to show pins
 const MIN_ZOOM_FOR_PINS = 13;
-// Radius in km to show pins when zoomed in
-const SHOW_RADIUS_KM = 2;
+// Radius in km to show pins when zoomed in (expanded to 4km for better coverage)
+const SHOW_RADIUS_KM = 4;
+// Maximum number of places to show on map
+const MAX_PLACES_ON_MAP = 50;
 
 // Fix Leaflet default icon
 function fixLeafletIcon() {
@@ -77,14 +79,21 @@ function useMapViewport() {
   return { center, zoom };
 }
 
-// Filter places based on zoom level and distance from center
+// Filter places based on zoom level and distance from reference point
 function useFilteredPlaces(
   places: Place[],
-  center: { lat: number; lng: number },
+  mapCenter: { lat: number; lng: number },
+  userLocation: { lat: number; lng: number } | null | undefined,
   zoom: number,
-  selectedPlaceId: string | null | undefined
-): { filteredPlaces: Place[]; shouldShowZoomHint: boolean } {
+  selectedPlaceId: string | null | undefined,
+  useMapCenterAsRef: boolean
+): { filteredPlaces: Place[]; shouldShowZoomHint: boolean; referencePoint: { lat: number; lng: number } } {
   return useMemo(() => {
+    // Determine reference point (map center or user location)
+    const referencePoint = (useMapCenterAsRef || !userLocation) 
+      ? mapCenter 
+      : userLocation;
+    
     // Always show selected place
     const selectedPlace = selectedPlaceId ? places.find(p => p.id === selectedPlaceId) : null;
     
@@ -92,24 +101,39 @@ function useFilteredPlaces(
     if (zoom < MIN_ZOOM_FOR_PINS) {
       return {
         filteredPlaces: selectedPlace ? [selectedPlace] : [],
-        shouldShowZoomHint: !selectedPlace || places.length > 1
+        shouldShowZoomHint: !selectedPlace || places.length > 1,
+        referencePoint
       };
     }
     
     // Zoom is sufficient, show places within radius + selected place
-    const placesInRadius = places.filter(place => {
-      // Always include selected place
-      if (place.id === selectedPlaceId) return true;
-      
-      const distance = calculateDistance(center.lat, center.lng, place.lat, place.lng);
-      return distance <= SHOW_RADIUS_KM;
-    });
+    // Sort by distance and limit to MAX_PLACES_ON_MAP
+    const placesWithDistance = places
+      .map(place => ({
+        place,
+        distance: calculateDistance(referencePoint.lat, referencePoint.lng, place.lat, place.lng),
+        isSelected: place.id === selectedPlaceId
+      }))
+      .filter(({ place, isSelected }) => isSelected || calculateDistance(referencePoint.lat, referencePoint.lng, place.lat, place.lng) <= SHOW_RADIUS_KM)
+      .sort((a, b) => {
+        // Selected place always first
+        if (a.isSelected && !b.isSelected) return -1;
+        if (!a.isSelected && b.isSelected) return 1;
+        // Then by distance
+        return a.distance - b.distance;
+      });
+    
+    // Take top MAX_PLACES_ON_MAP places
+    const limitedPlaces = placesWithDistance
+      .slice(0, MAX_PLACES_ON_MAP)
+      .map(({ place }) => place);
     
     return {
-      filteredPlaces: placesInRadius,
-      shouldShowZoomHint: false
+      filteredPlaces: limitedPlaces,
+      shouldShowZoomHint: false,
+      referencePoint
     };
-  }, [places, center, zoom, selectedPlaceId]);
+  }, [places, mapCenter, userLocation, zoom, selectedPlaceId, useMapCenterAsRef]);
 }
 
 // Zoom hint overlay component - uses useMap hook internally
@@ -143,20 +167,62 @@ function ZoomHintOverlay({ visible }: { visible: boolean }) {
 function PinCountIndicator({ 
   total, 
   visible, 
-  zoom 
+  zoom,
+  isCenterBased
 }: { 
   total: number; 
   visible: number; 
   zoom: number;
+  isCenterBased?: boolean;
 }) {
   return (
     <div className="absolute top-3 right-3 z-[400] bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md text-xs">
       <span className="font-medium text-gray-800">
-        {zoom < MIN_ZOOM_FOR_PINS ? '📍' : `📍 ${visible} / ${total}`}
+        {zoom < MIN_ZOOM_FOR_PINS ? '📍' : `📍 ${visible}`}
       </span>
       {zoom >= MIN_ZOOM_FOR_PINS && (
-        <span className="text-gray-500 ml-1">(2km內)</span>
+        <span className="text-gray-500 ml-1">
+          ({isCenterBased ? '地圖中心' : '定位'}4km內{visible >= MAX_PLACES_ON_MAP ? '·最多顯示50個' : ''})
+        </span>
       )}
+    </div>
+  );
+}
+
+// Center crosshair component - shows the reference point for distance calculation
+function CenterCrosshair() {
+  return (
+    <div className="absolute inset-0 z-[350] pointer-events-none flex items-center justify-center">
+      <div className="relative">
+        {/* Crosshair lines */}
+        <div className="absolute w-6 h-0.5 bg-gray-800/70 -translate-x-1/2 left-1/2 top-1/2" />
+        <div className="absolute h-6 w-0.5 bg-gray-800/70 -translate-y-1/2 left-1/2 top-1/2" />
+        {/* Center dot */}
+        <div className="w-2 h-2 bg-blue-500/80 rounded-full -translate-x-1/2 -translate-y-1/2" />
+        {/* Circle radius indicator */}
+        <div className="absolute w-32 h-32 border-2 border-dashed border-blue-400/40 rounded-full -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2" />
+      </div>
+    </div>
+  );
+}
+
+// Toggle for using map center vs user location as reference point
+function ReferenceToggle({ 
+  useMapCenter, 
+  onToggle 
+}: { 
+  useMapCenter: boolean; 
+  onToggle: () => void;
+}) {
+  return (
+    <div className="absolute bottom-4 left-4 z-[400] bg-white/95 backdrop-blur-sm rounded-lg shadow-md px-3 py-2">
+      <button
+        onClick={onToggle}
+        className="flex items-center gap-2 text-xs font-medium text-gray-700 hover:text-gray-900"
+      >
+        <span className={`w-2 h-2 rounded-full ${useMapCenter ? 'bg-blue-500' : 'bg-green-500'}`} />
+        {useMapCenter ? '📍 以地圖中心搜索' : '📍 以我的位置搜索'}
+      </button>
     </div>
   );
 }
@@ -250,12 +316,17 @@ function MapRef({
   // Track viewport changes
   const { center, zoom } = useMapViewport();
   
+  // Toggle between using map center or user location as reference point
+  const [useMapCenterAsRef, setUseMapCenterAsRef] = useState(true);
+  
   // Filter places based on zoom and distance
-  const { filteredPlaces, shouldShowZoomHint } = useFilteredPlaces(
+  const { filteredPlaces, shouldShowZoomHint, referencePoint } = useFilteredPlaces(
     places, 
-    center, 
+    center,
+    userLocation,
     zoom, 
-    selectedPlaceId
+    selectedPlaceId,
+    useMapCenterAsRef
   );
 
   const hongKongBounds = L.latLngBounds(
@@ -320,11 +391,23 @@ function MapRef({
       {/* Zoom hint overlay */}
       <ZoomHintOverlay visible={shouldShowZoomHint} />
       
+      {/* Center crosshair - shows reference point for distance calculation */}
+      {zoom >= MIN_ZOOM_FOR_PINS && useMapCenterAsRef && <CenterCrosshair />}
+      
+      {/* Reference point toggle */}
+      {zoom >= MIN_ZOOM_FOR_PINS && userLocation && (
+        <ReferenceToggle 
+          useMapCenter={useMapCenterAsRef} 
+          onToggle={() => setUseMapCenterAsRef(!useMapCenterAsRef)}
+        />
+      )}
+      
       {/* Pin count indicator */}
       <PinCountIndicator 
         total={places.length} 
         visible={filteredPlaces.length} 
         zoom={zoom}
+        isCenterBased={useMapCenterAsRef}
       />
     </>
   );
