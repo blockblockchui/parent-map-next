@@ -76,8 +76,8 @@ export default function Home() {
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const [locateAction, setLocateAction] = useState<{ lat: number; lng: number; trigger: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 22.32, lng: 114.17 });
-  const [useMapCenterForFilter, setUseMapCenterForFilter] = useState(true);
-  const [showMapPlacesOnly, setShowMapPlacesOnly] = useState(true);
+  const [listCenter, setListCenter] = useState<{ lat: number; lng: number }>({ lat: 22.32, lng: 114.17 });
+  const [hasMapMoved, setHasMapMoved] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'priceLow' | 'priceHigh'>('default');
   const [isListView, setIsListView] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -210,15 +210,13 @@ export default function Home() {
   };
 
   const filteredPlaces = useMemo(() => {
-    // Get reference point for distance calculation
-    const refPoint = (useMapCenterForFilter || !userLocation) ? mapCenter : userLocation;
+    // Always use listCenter (frozen until user clicks update button)
+    const refPoint = listCenter;
     
     return places.filter((place) => {
-      // Map radius filter - only show places within 4km when enabled
-      if (showMapPlacesOnly) {
-        const distance = calculateDistanceKm(refPoint.lat, refPoint.lng, place.lat, place.lng);
-        if (distance > 4) return false;
-      }
+      // Map radius filter - only show places within 4km
+      const distance = calculateDistanceKm(refPoint.lat, refPoint.lng, place.lat, place.lng);
+      if (distance > 4) return false;
       
       // Search filter
       if (searchQuery) {
@@ -281,7 +279,7 @@ export default function Home() {
       }
       return 0;
     });
-  }, [places, filters, searchQuery, showFavoritesOnly, favorites, sortBy, userLocation, mapCenter, useMapCenterForFilter, showMapPlacesOnly]);
+  }, [places, filters, searchQuery, showFavoritesOnly, favorites, sortBy, listCenter]);
 
   const selectedPlace = places.find((p) => p.id === selectedPlaceId);
 
@@ -683,7 +681,14 @@ export default function Home() {
                   onMarkerClick={(place) => setSelectedPlaceId(place.id)}
                   userLocation={userLocation}
                   locateAction={locateAction}
-                  onCenterChange={setMapCenter}
+                  onCenterChange={(center) => {
+                    setMapCenter(center);
+                    // Check if center has moved significantly from listCenter
+                    const distance = calculateDistanceKm(listCenter.lat, listCenter.lng, center.lat, center.lng);
+                    if (distance > 0.5) { // 500 meters threshold
+                      setHasMapMoved(true);
+                    }
+                  }}
                 />
                 <button
                   onClick={handleLocate}
@@ -712,15 +717,19 @@ export default function Home() {
           <div className="flex items-center gap-2">
             {showMap && (
               <button
-                onClick={() => setShowMapPlacesOnly(!showMapPlacesOnly)}
+                onClick={() => {
+                  setListCenter(mapCenter);
+                  setHasMapMoved(false);
+                }}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                  showMapPlacesOnly
-                    ? 'bg-blue-100 text-blue-700 border-blue-300'
-                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                  hasMapMoved
+                    ? 'bg-amber-100 text-amber-700 border-amber-300 animate-pulse'
+                    : 'bg-gray-100 text-gray-500 border-gray-200'
                 }`}
-                title={showMapPlacesOnly ? "顯示所有地點" : "只顯示地圖4km內地點"}
+                disabled={!hasMapMoved}
+                title={hasMapMoved ? "地圖已移動，點擊更新列表" : "列表已是最新"}
               >
-                {showMapPlacesOnly ? '🗺️ 地圖範圍內' : '🗺️ 所有地點'}
+                {hasMapMoved ? '🔄 按地圖更新列表' : '✓ 列表已同步'}
               </button>
             )}
             <select

@@ -193,15 +193,13 @@ function PinCountIndicator({
 // Center crosshair component - shows the reference point for distance calculation
 function CenterCrosshair() {
   return (
-    <div className="absolute inset-0 z-[500] pointer-events-none flex items-center justify-center">
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[500] pointer-events-none">
       <div className="relative">
         {/* Crosshair lines */}
         <div className="absolute w-8 h-0.5 bg-gray-800/80 -translate-x-1/2 left-1/2 top-1/2" />
         <div className="absolute h-8 w-0.5 bg-gray-800/80 -translate-y-1/2 left-1/2 top-1/2" />
         {/* Center dot */}
         <div className="w-2.5 h-2.5 bg-blue-600 rounded-full -translate-x-1/2 -translate-y-1/2" />
-        {/* Circle radius indicator - 4km approx at zoom 13 */}
-        <div className="absolute w-40 h-40 border-2 border-dashed border-blue-500/50 rounded-full -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2" />
       </div>
     </div>
   );
@@ -266,16 +264,11 @@ function MapResizer() {
 
 // Component to handle map view changes
 function MapViewController({
-  selectedPlaceId,
-  places,
   locateAction,
 }: {
-  selectedPlaceId?: string | null;
-  places: Place[];
   locateAction?: { lat: number; lng: number; trigger: number } | null;
 }) {
   const map = useMap();
-  const { zoom } = useMapViewport();
   const lastLocateTriggerRef = useRef<number>(0);
 
   // Handle locate action from parent (e.g., when clicking "取得定位")
@@ -287,18 +280,6 @@ function MapViewController({
       map.setView([locateAction.lat, locateAction.lng], MIN_ZOOM_FOR_PINS);
     }
   }, [locateAction, map]);
-
-  // Center on selected place - only if no recent locate action
-  useEffect(() => {
-    if (selectedPlaceId && (!locateAction || locateAction.trigger === lastLocateTriggerRef.current)) {
-      const place = places.find(p => p.id === selectedPlaceId);
-      if (place) {
-        map.invalidateSize();
-        const targetZoom = zoom < MIN_ZOOM_FOR_PINS ? MIN_ZOOM_FOR_PINS : zoom;
-        map.setView([place.lat, place.lng], targetZoom);
-      }
-    }
-  }, [selectedPlaceId, places, map, zoom, locateAction]);
 
   return null;
 }
@@ -345,8 +326,6 @@ function MapRef({
     <>
       <MapResizer />
       <MapViewController
-        selectedPlaceId={selectedPlaceId}
-        places={places}
         locateAction={locateAction}
       />
       <TileLayer
@@ -358,23 +337,33 @@ function MapRef({
       <MapBounds places={places} />
       
       {/* Filtered place markers */}
-      {filteredPlaces.map((place) => (
-        <Marker
-          key={place.id}
-          position={[place.lat, place.lng]}
-          eventHandlers={{
-            click: () => onMarkerClick?.(place),
-          }}
-          opacity={place.id === selectedPlaceId ? 1 : 0.8}
-        >
-          <Popup>
-            <div className="font-sans">
-              <p className="font-bold text-sm">{place.name}</p>
-              <p className="text-xs text-gray-600">{place.district}</p>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+      {filteredPlaces.map((place) => {
+        const isSelected = place.id === selectedPlaceId;
+        return (
+          <Marker
+            key={place.id}
+            position={[place.lat, place.lng]}
+            eventHandlers={{
+              click: () => onMarkerClick?.(place),
+            }}
+            icon={isSelected ? L.divIcon({
+              className: "custom-selected-icon",
+              html: "<div style='background-color:#ef4444;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);'></div>",
+              iconSize: [20, 20],
+              iconAnchor: [10, 10],
+            }) : undefined}
+            opacity={isSelected ? 1 : 0.8}
+            zIndexOffset={isSelected ? 1000 : 0}
+          >
+            <Popup>
+              <div className="font-sans">
+                <p className="font-bold text-sm">{place.name}</p>
+                <p className="text-xs text-gray-600">{place.district}</p>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
       
       {/* User location marker */}
       {userLocation && (
