@@ -88,6 +88,7 @@ export default function Home() {
   });
   const [filterBarHeight, setFilterBarHeight] = useState(60);
   const filterBarRef = useRef<HTMLDivElement>(null);
+  const placeListRef = useRef<HTMLDivElement>(null);
   
   // Fetch carparks data
   const { carparks, loading: carparksLoading } = useCarparks();
@@ -724,8 +725,8 @@ export default function Home() {
                 onClick={() => {
                   setListCenter(mapCenter);
                   setHasMapMoved(false);
-                  // Scroll to top of place list
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  // Scroll to top of place list container
+                  placeListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                   hasMapMoved
@@ -760,7 +761,7 @@ export default function Home() {
       </div>
 
       {/* Place List */}
-      <div className="max-w-7xl mx-auto px-4 pb-12">
+      <div ref={placeListRef} className="max-w-7xl mx-auto px-4 pb-12">
         <PlaceList
           places={filteredPlaces}
           selectedPlaceId={selectedPlaceId}
