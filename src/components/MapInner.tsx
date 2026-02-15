@@ -42,43 +42,7 @@ function fixLeafletIcon() {
   });
 }
 
-// Selected icon with larger size - created lazily
-let selectedIconLarge: L.Icon | null = null;
-
-function getSelectedIconLarge(): L.Icon {
-  if (!selectedIconLarge && typeof window !== 'undefined') {
-    selectedIconLarge = new L.Icon({
-      iconUrl: '/marker-icon-2x.png',
-      iconRetinaUrl: '/marker-icon-2x.png',
-      shadowUrl: '/marker-shadow.png',
-      iconSize: [30, 45],
-      iconAnchor: [15, 45],
-      popupAnchor: [0, -45],
-      shadowSize: [41, 41],
-    });
-  }
-  return selectedIconLarge!;
-}
-
-// Normal icon
-let normalIcon: L.Icon | null = null;
-
-function getNormalIcon(): L.Icon {
-  if (!normalIcon && typeof window !== 'undefined') {
-    normalIcon = new L.Icon({
-      iconUrl: '/marker-icon.png',
-      iconRetinaUrl: '/marker-icon-2x.png',
-      shadowUrl: '/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [0, -41],
-      shadowSize: [41, 41],
-    });
-  }
-  return normalIcon!;
-}
-
-// Individual place marker component - uses icon size for selection
+// Individual place marker component - uses CSS transform for selection
 function PlaceMarker({
   place,
   isSelected,
@@ -88,21 +52,30 @@ function PlaceMarker({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  const [icon, setIcon] = useState<L.Icon | undefined>(undefined);
+  const markerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIcon(isSelected ? getSelectedIconLarge() : getNormalIcon());
+    if (markerRef.current) {
+      const element = markerRef.current.getElement();
+      if (element) {
+        if (isSelected) {
+          element.style.transform = 'scale(1.3)';
+          element.style.transition = 'transform 0.2s ease';
+        } else {
+          element.style.transform = 'scale(1)';
+          element.style.transition = 'transform 0.2s ease';
+        }
+      }
     }
   }, [isSelected]);
 
   return (
     <Marker
+      ref={markerRef}
       position={[place.lat, place.lng]}
       eventHandlers={{
         click: onClick,
       }}
-      icon={icon}
       opacity={isSelected ? 1 : 0.5}
       zIndexOffset={isSelected ? 1000 : 0}
     >
