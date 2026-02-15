@@ -41,22 +41,7 @@ function fixLeafletIcon() {
   });
 }
 
-// Selected marker icon - created lazily
-let selectedIconInstance: L.DivIcon | null = null;
-
-function getSelectedIcon(): L.DivIcon {
-  if (!selectedIconInstance && typeof window !== 'undefined' && L) {
-    selectedIconInstance = L.divIcon({
-      className: "custom-selected-icon",
-      html: "<div style='background-color:#ef4444;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);'></div>",
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
-    });
-  }
-  return selectedIconInstance!;
-}
-
-// Individual place marker component
+// Individual place marker component - uses opacity and z-index for selection
 function PlaceMarker({
   place,
   isSelected,
@@ -66,19 +51,13 @@ function PlaceMarker({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  // Use a key to force re-render when selection changes
-  // This ensures the Marker is recreated with the correct icon
-  const markerKey = `${place.id}-${isSelected ? 'selected' : 'normal'}`;
-  
   return (
     <Marker
-      key={markerKey}
       position={[place.lat, place.lng]}
       eventHandlers={{
         click: onClick,
       }}
-      icon={isSelected ? getSelectedIcon() : undefined}
-      opacity={isSelected ? 1 : 0.8}
+      opacity={isSelected ? 1 : 0.6}
       zIndexOffset={isSelected ? 1000 : 0}
     >
       <Popup>
