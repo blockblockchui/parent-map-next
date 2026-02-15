@@ -657,10 +657,10 @@ export default function Home() {
                 />
                 <button
                   onClick={handleLocate}
-                  className="absolute bottom-4 right-4 z-[500] bg-white text-gray-900 p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors font-medium"
-                  title="定位我的位置"
+                  className="absolute bottom-4 right-4 z-[500] bg-white text-gray-900 p-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors font-medium text-sm whitespace-nowrap"
+                  title="取得我的位置"
                 >
-                  定位我
+                  取得定位
                 </button>
               </div>
             </div>

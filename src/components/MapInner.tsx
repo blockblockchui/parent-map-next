@@ -111,9 +111,15 @@ function useFilteredPlaces(
   }, [places, center, zoom, selectedPlaceId]);
 }
 
-// Zoom hint overlay component
-function ZoomHintOverlay({ visible, onZoomIn }: { visible: boolean; onZoomIn: () => void }) {
+// Zoom hint overlay component - uses useMap hook internally
+function ZoomHintOverlay({ visible }: { visible: boolean }) {
+  const map = useMap();
+  
   if (!visible) return null;
+  
+  const handleZoomIn = () => {
+    map.setZoom(MIN_ZOOM_FOR_PINS);
+  };
   
   return (
     <div className="absolute inset-0 z-[400] flex items-center justify-center pointer-events-none">
@@ -122,7 +128,7 @@ function ZoomHintOverlay({ visible, onZoomIn }: { visible: boolean; onZoomIn: ()
         <p className="text-gray-800 font-medium mb-1">放大地圖以查看地點</p>
         <p className="text-gray-500 text-sm mb-3">縮放至更近以顯示附近親子地點</p>
         <button
-          onClick={onZoomIn}
+          onClick={handleZoomIn}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
         >
           放大 +
@@ -210,13 +216,6 @@ function MapRef({
     selectedPlaceId
   );
 
-  // Handle zoom in button
-  const handleZoomIn = () => {
-    if (mapRef.current) {
-      mapRef.current.setZoom(MIN_ZOOM_FOR_PINS);
-    }
-  };
-
   // Center on selected place
   useEffect(() => {
     if (mapRef.current && selectedPlaceId) {
@@ -291,7 +290,7 @@ function MapRef({
       )}
       
       {/* Zoom hint overlay */}
-      <ZoomHintOverlay visible={shouldShowZoomHint} onZoomIn={handleZoomIn} />
+      <ZoomHintOverlay visible={shouldShowZoomHint} />
       
       {/* Pin count indicator */}
       <PinCountIndicator 
