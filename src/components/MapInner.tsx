@@ -51,17 +51,13 @@ function PlaceMarker({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  // Force re-render when selection changes
-  const key = `${place.id}-${isSelected ? 'sel' : 'unsel'}`;
-  
   return (
     <Marker
-      key={key}
       position={[place.lat, place.lng]}
       eventHandlers={{
         click: onClick,
       }}
-      opacity={isSelected ? 1 : 0.7}
+      opacity={isSelected ? 1 : 0.3}
       zIndexOffset={isSelected ? 1000 : 0}
     >
       <Popup>

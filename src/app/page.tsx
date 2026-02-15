@@ -57,6 +57,7 @@ const priceSymbols: Record<string, string> = {
 
 export default function Home() {
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [showPlaceDetail, setShowPlaceDetail] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -678,7 +679,10 @@ export default function Home() {
                 <Map
                   places={places}
                   selectedPlaceId={selectedPlaceId}
-                  onMarkerClick={(place) => setSelectedPlaceId(place.id)}
+                  onMarkerClick={(place) => {
+                    setSelectedPlaceId(place.id);
+                    setShowPlaceDetail(true);
+                  }}
                   userLocation={userLocation}
                   locateAction={locateAction}
                   onCenterChange={(center) => {
@@ -758,7 +762,10 @@ export default function Home() {
         <PlaceList
           places={filteredPlaces}
           selectedPlaceId={selectedPlaceId}
-          onPlaceClick={(place) => setSelectedPlaceId(place.id)}
+          onPlaceClick={(place) => {
+            setSelectedPlaceId(place.id);
+            setShowPlaceDetail(true);
+          }}
           userLocation={userLocation}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
@@ -767,10 +774,10 @@ export default function Home() {
       </div>
 
       {/* Selected Place Detail */}
-      {selectedPlace && (
+      {selectedPlace && showPlaceDetail && (
         <div
           className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
-          onClick={() => setSelectedPlaceId(null)}
+          onClick={() => setShowPlaceDetail(false)}
         >
           <div
             className="bg-white w-full sm:w-[500px] sm:rounded-2xl rounded-t-2xl max-h-[80vh] overflow-y-auto"
@@ -791,7 +798,7 @@ export default function Home() {
                     {favorites.includes(selectedPlace.id) ? "❤️" : "🤍"}
                   </button>
                   <button
-                    onClick={() => setSelectedPlaceId(null)}
+                    onClick={() => setShowPlaceDetail(false)}
                     className="text-gray-400 hover:text-gray-600 text-xl px-2"
                   >
                     ×
