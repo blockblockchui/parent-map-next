@@ -41,7 +41,22 @@ function fixLeafletIcon() {
   });
 }
 
-// Individual place marker component - uses opacity and z-index for selection
+// Selected icon - created once when needed
+let selectedIcon: L.Icon | null = null;
+
+function getSelectedIcon(): L.Icon {
+  if (!selectedIcon && typeof window !== 'undefined') {
+    selectedIcon = new L.Icon({
+      iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiNlZjQ0NDQiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+      popupAnchor: [0, -10],
+    });
+  }
+  return selectedIcon!;
+}
+
+// Individual place marker component
 function PlaceMarker({
   place,
   isSelected,
@@ -51,13 +66,25 @@ function PlaceMarker({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  // Only use custom icon when selected and on client side
+  const [icon, setIcon] = useState<L.Icon | undefined>(undefined);
+  
+  useEffect(() => {
+    if (isSelected && typeof window !== 'undefined') {
+      setIcon(getSelectedIcon());
+    } else {
+      setIcon(undefined);
+    }
+  }, [isSelected]);
+  
   return (
     <Marker
       position={[place.lat, place.lng]}
       eventHandlers={{
         click: onClick,
       }}
-      opacity={isSelected ? 1 : 0.6}
+      icon={icon}
+      opacity={isSelected ? 1 : 0.7}
       zIndexOffset={isSelected ? 1000 : 0}
     >
       <Popup>
