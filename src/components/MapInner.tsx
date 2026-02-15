@@ -163,9 +163,12 @@ function PinCountIndicator({
 
 function MapBounds({ places }: { places: Place[] }) {
   const map = useMap();
+  const hasFittedRef = useRef(false);
   
   useEffect(() => {
-    if (places.length > 0) {
+    // Only fit bounds on initial load, not on subsequent updates
+    if (places.length > 0 && !hasFittedRef.current) {
+      hasFittedRef.current = true;
       const bounds = L.latLngBounds(places.map(p => [p.lat, p.lng]));
       map.fitBounds(bounds, { padding: [50, 50] });
     }
