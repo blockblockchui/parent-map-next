@@ -102,10 +102,12 @@ export default function PlaceList({
     <div>
       {/* List */}
       <div className={isListView ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
-        {placesWithDistance.map((place) => (
+        {placesWithDistance.map((place, index) => (
           <PlaceCard
             key={place.id}
             place={place}
+            index={index + 1}
+            total={placesWithDistance.length}
             isListView={isListView}
             isSelected={selectedPlaceId === place.id}
             onClick={() => onPlaceClick?.(place)}
@@ -126,6 +128,8 @@ interface PlaceWithDistance extends Place {
 
 function PlaceCard({
   place,
+  index,
+  total,
   isListView,
   isSelected,
   onClick,
@@ -134,6 +138,8 @@ function PlaceCard({
   onToggleFavorite,
 }: {
   place: PlaceWithDistance;
+  index: number;
+  total: number;
   isListView: boolean;
   isSelected: boolean;
   onClick: () => void;
@@ -161,6 +167,10 @@ function PlaceCard({
         }`}
       >
         <div className="flex gap-3">
+          {/* Index number */}
+          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm">
+            {index}
+          </div>
           {/* Image - hidden on mobile */}
           <div className="hidden sm:block w-24 h-20 flex-shrink-0">
             {hasImage ? (
@@ -230,10 +240,14 @@ function PlaceCard({
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden cursor-pointer ${
+      className={`bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden cursor-pointer relative ${
         isSelected ? "ring-2 ring-blue-500" : ""
       }`}
     >
+      {/* Index badge */}
+      <div className="absolute top-2 left-2 z-10 w-7 h-7 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-xs shadow-sm">
+        {index}
+      </div>
       {/* Image */}
       <div className="h-40 relative">
         {hasImage ? (

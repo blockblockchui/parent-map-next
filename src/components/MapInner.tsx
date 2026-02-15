@@ -193,15 +193,15 @@ function PinCountIndicator({
 // Center crosshair component - shows the reference point for distance calculation
 function CenterCrosshair() {
   return (
-    <div className="absolute inset-0 z-[350] pointer-events-none flex items-center justify-center">
+    <div className="absolute inset-0 z-[500] pointer-events-none flex items-center justify-center">
       <div className="relative">
         {/* Crosshair lines */}
-        <div className="absolute w-6 h-0.5 bg-gray-800/70 -translate-x-1/2 left-1/2 top-1/2" />
-        <div className="absolute h-6 w-0.5 bg-gray-800/70 -translate-y-1/2 left-1/2 top-1/2" />
+        <div className="absolute w-8 h-0.5 bg-gray-800/80 -translate-x-1/2 left-1/2 top-1/2" />
+        <div className="absolute h-8 w-0.5 bg-gray-800/80 -translate-y-1/2 left-1/2 top-1/2" />
         {/* Center dot */}
-        <div className="w-2 h-2 bg-blue-500/80 rounded-full -translate-x-1/2 -translate-y-1/2" />
-        {/* Circle radius indicator */}
-        <div className="absolute w-32 h-32 border-2 border-dashed border-blue-400/40 rounded-full -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2" />
+        <div className="w-2.5 h-2.5 bg-blue-600 rounded-full -translate-x-1/2 -translate-y-1/2" />
+        {/* Circle radius indicator - 4km approx at zoom 13 */}
+        <div className="absolute w-40 h-40 border-2 border-dashed border-blue-500/50 rounded-full -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2" />
       </div>
     </div>
   );
@@ -216,7 +216,7 @@ function ReferenceToggle({
   onToggle: () => void;
 }) {
   return (
-    <div className="absolute bottom-4 left-4 z-[400] bg-white/95 backdrop-blur-sm rounded-lg shadow-md px-3 py-2">
+    <div className="absolute top-4 left-4 z-[400] bg-white/95 backdrop-blur-sm rounded-lg shadow-md px-3 py-2">
       <button
         onClick={onToggle}
         className="flex items-center gap-2 text-xs font-medium text-gray-700 hover:text-gray-900"

@@ -77,7 +77,7 @@ export default function Home() {
   const [locateAction, setLocateAction] = useState<{ lat: number; lng: number; trigger: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 22.32, lng: 114.17 });
   const [useMapCenterForFilter, setUseMapCenterForFilter] = useState(true);
-  const [showMapPlacesOnly, setShowMapPlacesOnly] = useState(false);
+  const [showMapPlacesOnly, setShowMapPlacesOnly] = useState(true);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'priceLow' | 'priceHigh'>('default');
   const [isListView, setIsListView] = useState(() => {
     if (typeof window !== 'undefined') {
