@@ -42,7 +42,43 @@ function fixLeafletIcon() {
   });
 }
 
-// Individual place marker component - uses default icon with styling
+// Selected icon with larger size - created lazily
+let selectedIconLarge: L.Icon | null = null;
+
+function getSelectedIconLarge(): L.Icon {
+  if (!selectedIconLarge && typeof window !== 'undefined') {
+    selectedIconLarge = new L.Icon({
+      iconUrl: '/marker-icon-2x.png',
+      iconRetinaUrl: '/marker-icon-2x.png',
+      shadowUrl: '/marker-shadow.png',
+      iconSize: [30, 45],
+      iconAnchor: [15, 45],
+      popupAnchor: [0, -45],
+      shadowSize: [41, 41],
+    });
+  }
+  return selectedIconLarge!;
+}
+
+// Normal icon
+let normalIcon: L.Icon | null = null;
+
+function getNormalIcon(): L.Icon {
+  if (!normalIcon && typeof window !== 'undefined') {
+    normalIcon = new L.Icon({
+      iconUrl: '/marker-icon.png',
+      iconRetinaUrl: '/marker-icon-2x.png',
+      shadowUrl: '/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [0, -41],
+      shadowSize: [41, 41],
+    });
+  }
+  return normalIcon!;
+}
+
+// Individual place marker component - uses icon size for selection
 function PlaceMarker({
   place,
   isSelected,
@@ -52,18 +88,27 @@ function PlaceMarker({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  const [icon, setIcon] = useState<L.Icon | undefined>(undefined);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIcon(isSelected ? getSelectedIconLarge() : getNormalIcon());
+    }
+  }, [isSelected]);
+
   return (
     <Marker
       position={[place.lat, place.lng]}
       eventHandlers={{
         click: onClick,
       }}
-      opacity={isSelected ? 1 : 0.3}
+      icon={icon}
+      opacity={isSelected ? 1 : 0.5}
       zIndexOffset={isSelected ? 1000 : 0}
     >
       <Popup>
         <div className="font-sans">
-          <p className={`font-bold text-sm ${isSelected ? 'text-red-600' : ''}`}>
+          <p className="font-bold text-sm">
             {place.name}
           </p>
           <p className="text-xs text-gray-600">{place.district}</p>
@@ -188,30 +233,6 @@ function ZoomHintOverlay({ visible }: { visible: boolean }) {
           放大 +
         </button>
       </div>
-    </div>
-  );
-}
-
-// Pin count indicator
-function PinCountIndicator({ 
-  total, 
-  visible, 
-  zoom
-}: { 
-  total: number; 
-  visible: number; 
-  zoom: number;
-}) {
-  return (
-    <div className="absolute top-3 right-3 z-[400] bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md text-xs">
-      <span className="font-medium text-gray-800">
-        {zoom < MIN_ZOOM_FOR_PINS ? '📍' : `📍 ${visible}`}
-      </span>
-      {zoom >= MIN_ZOOM_FOR_PINS && (
-        <span className="text-gray-500 ml-1">
-          (4km內{visible >= MAX_PLACES_ON_MAP ? '·最多顯示50個' : ''})
-        </span>
-      )}
     </div>
   );
 }
@@ -377,13 +398,6 @@ function MapRef({
       
       {/* Zoom hint overlay */}
       <ZoomHintOverlay visible={shouldShowZoomHint} />
-      
-      {/* Pin count indicator */}
-      <PinCountIndicator 
-        total={places.length} 
-        visible={filteredPlaces.length} 
-        zoom={zoom}
-      />
     </>
   );
 }
