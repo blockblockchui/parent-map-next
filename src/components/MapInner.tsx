@@ -19,7 +19,7 @@ interface MapInnerProps {
   selectedPlaceId?: string | null;
   onMarkerClick?: (place: Place) => void;
   userLocation?: { lat: number; lng: number } | null;
-  locateTrigger?: number;
+  locateAction?: { lat: number; lng: number; trigger: number } | null;
 }
 
 // Minimum zoom level to show pins
@@ -198,13 +198,11 @@ function MapResizer() {
 function MapViewController({
   selectedPlaceId,
   places,
-  userLocation,
-  locateTrigger,
+  locateAction,
 }: {
   selectedPlaceId?: string | null;
   places: Place[];
-  userLocation?: { lat: number; lng: number } | null;
-  locateTrigger?: number;
+  locateAction?: { lat: number; lng: number; trigger: number } | null;
 }) {
   const map = useMap();
   const { zoom } = useMapViewport();
@@ -221,14 +219,14 @@ function MapViewController({
     }
   }, [selectedPlaceId, places, map, zoom]);
 
-  // Handle locate trigger from parent (e.g., when clicking "取得定位")
-  // This fires every time locateTrigger changes, forcing a re-center and zoom
+  // Handle locate action from parent (e.g., when clicking "取得定位")
+  // This fires every time locateAction changes, using the position from the action itself
   useEffect(() => {
-    if (locateTrigger && locateTrigger > 0 && userLocation) {
+    if (locateAction) {
       map.invalidateSize();
-      map.setView([userLocation.lat, userLocation.lng], MIN_ZOOM_FOR_PINS);
+      map.setView([locateAction.lat, locateAction.lng], MIN_ZOOM_FOR_PINS);
     }
-  }, [locateTrigger, userLocation, map]);
+  }, [locateAction, map]);
 
   return null;
 }
@@ -238,7 +236,7 @@ function MapRef({
   selectedPlaceId, 
   onMarkerClick,
   userLocation,
-  locateTrigger,
+  locateAction,
 }: MapInnerProps) {
   useEffect(() => {
     fixLeafletIcon();
@@ -266,8 +264,7 @@ function MapRef({
       <MapViewController
         selectedPlaceId={selectedPlaceId}
         places={places}
-        userLocation={userLocation}
-        locateTrigger={locateTrigger}
+        locateAction={locateAction}
       />
       <TileLayer
         attribution='© 地圖資料由地政總署提供'

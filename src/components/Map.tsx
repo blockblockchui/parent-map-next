@@ -30,7 +30,7 @@ interface MapProps {
   selectedPlaceId?: string | null;
   onMarkerClick?: (place: Place) => void;
   userLocation?: { lat: number; lng: number } | null;
-  locateTrigger?: number;
+  locateAction?: { lat: number; lng: number; trigger: number } | null;
 }
 
 export default function Map(props: MapProps) {
