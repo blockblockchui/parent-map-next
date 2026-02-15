@@ -75,6 +75,9 @@ export default function Home() {
   const [showMap, setShowMap] = useState(true);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const [locateAction, setLocateAction] = useState<{ lat: number; lng: number; trigger: number } | null>(null);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 22.32, lng: 114.17 });
+  const [useMapCenterForFilter, setUseMapCenterForFilter] = useState(true);
+  const [showMapPlacesOnly, setShowMapPlacesOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'priceLow' | 'priceHigh'>('default');
   const [isListView, setIsListView] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -194,8 +197,29 @@ export default function Home() {
     );
   };
 
+  // Calculate distance between two points (Haversine formula) in km
+  const calculateDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
   const filteredPlaces = useMemo(() => {
+    // Get reference point for distance calculation
+    const refPoint = (useMapCenterForFilter || !userLocation) ? mapCenter : userLocation;
+    
     return places.filter((place) => {
+      // Map radius filter - only show places within 4km when enabled
+      if (showMapPlacesOnly) {
+        const distance = calculateDistanceKm(refPoint.lat, refPoint.lng, place.lat, place.lng);
+        if (distance > 4) return false;
+      }
+      
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -242,9 +266,9 @@ export default function Home() {
       return true;
     }).sort((a, b) => {
       // Sort logic
-      if (sortBy === 'distance' && userLocation) {
-        const distA = calculateDistance(userLocation.lat, userLocation.lng, a.lat, a.lng);
-        const distB = calculateDistance(userLocation.lat, userLocation.lng, b.lat, b.lng);
+      if (sortBy === 'distance') {
+        const distA = calculateDistanceKm(refPoint.lat, refPoint.lng, a.lat, a.lng);
+        const distB = calculateDistanceKm(refPoint.lat, refPoint.lng, b.lat, b.lng);
         return distA - distB;
       }
       if (sortBy === 'priceLow') {
@@ -257,7 +281,7 @@ export default function Home() {
       }
       return 0;
     });
-  }, [places, filters, searchQuery, showFavoritesOnly, favorites, sortBy, userLocation]);
+  }, [places, filters, searchQuery, showFavoritesOnly, favorites, sortBy, userLocation, mapCenter, useMapCenterForFilter, showMapPlacesOnly]);
 
   const selectedPlace = places.find((p) => p.id === selectedPlaceId);
 
@@ -654,11 +678,12 @@ export default function Home() {
                 }}
               >
                 <Map
-                  places={filteredPlaces}
+                  places={places}
                   selectedPlaceId={selectedPlaceId}
                   onMarkerClick={(place) => setSelectedPlaceId(place.id)}
                   userLocation={userLocation}
                   locateAction={locateAction}
+                  onCenterChange={setMapCenter}
                 />
                 <button
                   onClick={handleLocate}
@@ -685,6 +710,19 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            {showMap && (
+              <button
+                onClick={() => setShowMapPlacesOnly(!showMapPlacesOnly)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  showMapPlacesOnly
+                    ? 'bg-blue-100 text-blue-700 border-blue-300'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                }`}
+                title={showMapPlacesOnly ? "顯示所有地點" : "只顯示地圖4km內地點"}
+              >
+                {showMapPlacesOnly ? '🗺️ 地圖範圍內' : '🗺️ 所有地點'}
+              </button>
+            )}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'default' | 'distance' | 'priceLow' | 'priceHigh')}

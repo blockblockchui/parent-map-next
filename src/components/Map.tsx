@@ -31,6 +31,7 @@ interface MapProps {
   onMarkerClick?: (place: Place) => void;
   userLocation?: { lat: number; lng: number } | null;
   locateAction?: { lat: number; lng: number; trigger: number } | null;
+  onCenterChange?: (center: { lat: number; lng: number }) => void;
 }
 
 export default function Map(props: MapProps) {

@@ -20,6 +20,7 @@ interface MapInnerProps {
   onMarkerClick?: (place: Place) => void;
   userLocation?: { lat: number; lng: number } | null;
   locateAction?: { lat: number; lng: number; trigger: number } | null;
+  onCenterChange?: (center: { lat: number; lng: number }) => void;
 }
 
 // Minimum zoom level to show pins
@@ -308,6 +309,7 @@ function MapRef({
   onMarkerClick,
   userLocation,
   locateAction,
+  onCenterChange,
 }: MapInnerProps) {
   useEffect(() => {
     fixLeafletIcon();
@@ -315,6 +317,11 @@ function MapRef({
 
   // Track viewport changes
   const { center, zoom } = useMapViewport();
+  
+  // Notify parent of center changes
+  useEffect(() => {
+    onCenterChange?.(center);
+  }, [center, onCenterChange]);
   
   // Toggle between using map center or user location as reference point
   const [useMapCenterAsRef, setUseMapCenterAsRef] = useState(true);
@@ -392,10 +399,10 @@ function MapRef({
       <ZoomHintOverlay visible={shouldShowZoomHint} />
       
       {/* Center crosshair - shows reference point for distance calculation */}
-      {zoom >= MIN_ZOOM_FOR_PINS && useMapCenterAsRef && <CenterCrosshair />}
+      <CenterCrosshair />
       
       {/* Reference point toggle */}
-      {zoom >= MIN_ZOOM_FOR_PINS && userLocation && (
+      {userLocation && (
         <ReferenceToggle 
           useMapCenter={useMapCenterAsRef} 
           onToggle={() => setUseMapCenterAsRef(!useMapCenterAsRef)}
