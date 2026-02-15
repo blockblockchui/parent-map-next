@@ -78,6 +78,7 @@ export default function Home() {
   const [locateAction, setLocateAction] = useState<{ lat: number; lng: number; trigger: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 22.32, lng: 114.17 });
   const [listCenter, setListCenter] = useState<{ lat: number; lng: number }>({ lat: 22.32, lng: 114.17 });
+  const [mapBounds, setMapBounds] = useState<{ south: number; west: number; north: number; east: number } | null>(null);
   const [hasMapMoved, setHasMapMoved] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'distance' | 'priceLow' | 'priceHigh'>('default');
   const [isListView, setIsListView] = useState(() => {
@@ -188,6 +189,10 @@ export default function Home() {
         // Set locate action with new location to force map update
         // Use timestamp to ensure unique value
         setLocateAction({ ...newLocation, trigger: Date.now() });
+        // If sort is default, change to distance (near to far)
+        if (sortBy === 'default') {
+          setSortBy('distance');
+        }
       },
       (error) => {
         console.error("Geolocation error:", error);
@@ -217,9 +222,13 @@ export default function Home() {
     const refPoint = listCenter;
     
     return places.filter((place) => {
-      // Map radius filter - only show places within 4km
-      const distance = calculateDistanceKm(refPoint.lat, refPoint.lng, place.lat, place.lng);
-      if (distance > 4) return false;
+      // Map bounds filter - only show places within visible map bounds
+      if (mapBounds) {
+        if (place.lat < mapBounds.south || place.lat > mapBounds.north ||
+            place.lng < mapBounds.west || place.lng > mapBounds.east) {
+          return false;
+        }
+      }
       
       // Search filter
       if (searchQuery) {
@@ -282,7 +291,7 @@ export default function Home() {
       }
       return 0;
     });
-  }, [places, filters, searchQuery, showFavoritesOnly, favorites, sortBy, listCenter]);
+  }, [places, filters, searchQuery, showFavoritesOnly, favorites, sortBy, listCenter, mapBounds]);
 
   const selectedPlace = places.find((p) => p.id === selectedPlaceId);
 
@@ -695,6 +704,7 @@ export default function Home() {
                       setHasMapMoved(true);
                     }
                   }}
+                  onBoundsChange={setMapBounds}
                 />
                 <button
                   onClick={handleLocate}

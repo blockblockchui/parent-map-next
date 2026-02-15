@@ -32,6 +32,7 @@ interface MapProps {
   userLocation?: { lat: number; lng: number } | null;
   locateAction?: { lat: number; lng: number; trigger: number } | null;
   onCenterChange?: (center: { lat: number; lng: number }) => void;
+  onBoundsChange?: (bounds: { south: number; west: number; north: number; east: number }) => void;
 }
 
 export default function Map(props: MapProps) {

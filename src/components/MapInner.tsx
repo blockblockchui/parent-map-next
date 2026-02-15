@@ -21,6 +21,7 @@ interface MapInnerProps {
   userLocation?: { lat: number; lng: number } | null;
   locateAction?: { lat: number; lng: number; trigger: number } | null;
   onCenterChange?: (center: { lat: number; lng: number }) => void;
+  onBoundsChange?: (bounds: { south: number; west: number; north: number; east: number }) => void;
 }
 
 // Minimum zoom level to show pins
@@ -280,6 +281,7 @@ function MapRef({
   userLocation,
   locateAction,
   onCenterChange,
+  onBoundsChange,
 }: MapInnerProps) {
   useEffect(() => {
     fixLeafletIcon();
@@ -287,11 +289,33 @@ function MapRef({
 
   // Track viewport changes
   const { center, zoom } = useMapViewport();
+  const map = useMap();
   
   // Notify parent of center changes
   useEffect(() => {
     onCenterChange?.(center);
   }, [center, onCenterChange]);
+
+  // Track map bounds changes
+  useEffect(() => {
+    const handleMoveEnd = () => {
+      const bounds = map.getBounds();
+      onBoundsChange?.({
+        south: bounds.getSouth(),
+        west: bounds.getWest(),
+        north: bounds.getNorth(),
+        east: bounds.getEast(),
+      });
+    };
+    
+    map.on('moveend', handleMoveEnd);
+    // Initial bounds
+    handleMoveEnd();
+    
+    return () => {
+      map.off('moveend', handleMoveEnd);
+    };
+  }, [map, onBoundsChange]);
   
   // Filter places based on zoom and distance - always use map center
   const { filteredPlaces, shouldShowZoomHint } = useFilteredPlaces(
