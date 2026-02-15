@@ -41,15 +41,7 @@ function fixLeafletIcon() {
   });
 }
 
-// Create selected marker icon
-const selectedIcon = L.divIcon({
-  className: "custom-selected-icon",
-  html: "<div style='background-color:#ef4444;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);'></div>",
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
-});
-
-// Individual place marker component
+// Individual place marker component - creates icon inside component to avoid SSR issues
 function PlaceMarker({
   place,
   isSelected,
@@ -59,13 +51,27 @@ function PlaceMarker({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  // Create icon only on client side
+  const [selectedIcon, setSelectedIcon] = useState<L.DivIcon | null>(null);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined' && L) {
+      setSelectedIcon(L.divIcon({
+        className: "custom-selected-icon",
+        html: "<div style='background-color:#ef4444;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);'></div>",
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      }));
+    }
+  }, []);
+  
   return (
     <Marker
       position={[place.lat, place.lng]}
       eventHandlers={{
         click: onClick,
       }}
-      icon={isSelected ? selectedIcon : undefined}
+      icon={isSelected && selectedIcon ? selectedIcon : undefined}
       opacity={isSelected ? 1 : 0.8}
       zIndexOffset={isSelected ? 1000 : 0}
     >
