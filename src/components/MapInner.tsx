@@ -195,6 +195,47 @@ function MapResizer() {
   return null;
 }
 
+// Component to handle map view changes
+function MapViewController({
+  selectedPlaceId,
+  places,
+  userLocation,
+  zoomTrigger,
+  onZoomTriggered,
+}: {
+  selectedPlaceId?: string | null;
+  places: Place[];
+  userLocation?: { lat: number; lng: number } | null;
+  zoomTrigger?: number | null;
+  onZoomTriggered?: () => void;
+}) {
+  const map = useMap();
+  const { zoom } = useMapViewport();
+
+  // Center on selected place
+  useEffect(() => {
+    if (selectedPlaceId) {
+      const place = places.find(p => p.id === selectedPlaceId);
+      if (place) {
+        map.invalidateSize();
+        const targetZoom = zoom < MIN_ZOOM_FOR_PINS ? MIN_ZOOM_FOR_PINS : zoom;
+        map.setView([place.lat, place.lng], targetZoom);
+      }
+    }
+  }, [selectedPlaceId, places, map, zoom]);
+
+  // Handle zoom trigger from parent (e.g., when clicking "取得定位")
+  useEffect(() => {
+    if (zoomTrigger && userLocation) {
+      map.invalidateSize();
+      map.setView([userLocation.lat, userLocation.lng], zoomTrigger);
+      onZoomTriggered?.();
+    }
+  }, [zoomTrigger, userLocation, map, onZoomTriggered]);
+
+  return null;
+}
+
 function MapRef({ 
   places, 
   selectedPlaceId, 
@@ -203,8 +244,6 @@ function MapRef({
   zoomTrigger,
   onZoomTriggered
 }: MapInnerProps) {
-  const mapRef = useRef<L.Map | null>(null);
-
   useEffect(() => {
     fixLeafletIcon();
   }, []);
@@ -220,28 +259,6 @@ function MapRef({
     selectedPlaceId
   );
 
-  // Center on selected place
-  useEffect(() => {
-    if (mapRef.current && selectedPlaceId) {
-      const place = places.find(p => p.id === selectedPlaceId);
-      if (place) {
-        mapRef.current.invalidateSize();
-        // Only change zoom if currently below minimum, otherwise keep current zoom
-        const targetZoom = zoom < MIN_ZOOM_FOR_PINS ? MIN_ZOOM_FOR_PINS : zoom;
-        mapRef.current.setView([place.lat, place.lng], targetZoom);
-      }
-    }
-  }, [selectedPlaceId, places]);
-
-  // Handle zoom trigger from parent (e.g., when clicking "取得定位")
-  useEffect(() => {
-    if (mapRef.current && zoomTrigger && userLocation) {
-      mapRef.current.invalidateSize();
-      mapRef.current.setView([userLocation.lat, userLocation.lng], zoomTrigger);
-      onZoomTriggered?.();
-    }
-  }, [zoomTrigger, userLocation, onZoomTriggered]);
-
   const hongKongBounds = L.latLngBounds(
     [22.15, 113.75],
     [22.55, 114.45]
@@ -250,6 +267,13 @@ function MapRef({
   return (
     <>
       <MapResizer />
+      <MapViewController
+        selectedPlaceId={selectedPlaceId}
+        places={places}
+        userLocation={userLocation}
+        zoomTrigger={zoomTrigger}
+        onZoomTriggered={onZoomTriggered}
+      />
       <TileLayer
         attribution='© 地圖資料由地政總署提供'
         url="https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/basemap/wgs84/{z}/{x}/{y}.png"
