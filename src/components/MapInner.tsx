@@ -19,8 +19,7 @@ interface MapInnerProps {
   selectedPlaceId?: string | null;
   onMarkerClick?: (place: Place) => void;
   userLocation?: { lat: number; lng: number } | null;
-  zoomTrigger?: number | null;
-  onZoomTriggered?: () => void;
+  locateTrigger?: number;
 }
 
 // Minimum zoom level to show pins
@@ -200,14 +199,12 @@ function MapViewController({
   selectedPlaceId,
   places,
   userLocation,
-  zoomTrigger,
-  onZoomTriggered,
+  locateTrigger,
 }: {
   selectedPlaceId?: string | null;
   places: Place[];
   userLocation?: { lat: number; lng: number } | null;
-  zoomTrigger?: number | null;
-  onZoomTriggered?: () => void;
+  locateTrigger?: number;
 }) {
   const map = useMap();
   const { zoom } = useMapViewport();
@@ -224,14 +221,14 @@ function MapViewController({
     }
   }, [selectedPlaceId, places, map, zoom]);
 
-  // Handle zoom trigger from parent (e.g., when clicking "取得定位")
+  // Handle locate trigger from parent (e.g., when clicking "取得定位")
+  // This fires every time locateTrigger changes, forcing a re-center and zoom
   useEffect(() => {
-    if (zoomTrigger && userLocation) {
+    if (locateTrigger && locateTrigger > 0 && userLocation) {
       map.invalidateSize();
-      map.setView([userLocation.lat, userLocation.lng], zoomTrigger);
-      onZoomTriggered?.();
+      map.setView([userLocation.lat, userLocation.lng], MIN_ZOOM_FOR_PINS);
     }
-  }, [zoomTrigger, userLocation, map, onZoomTriggered]);
+  }, [locateTrigger, userLocation, map]);
 
   return null;
 }
@@ -241,8 +238,7 @@ function MapRef({
   selectedPlaceId, 
   onMarkerClick,
   userLocation,
-  zoomTrigger,
-  onZoomTriggered
+  locateTrigger,
 }: MapInnerProps) {
   useEffect(() => {
     fixLeafletIcon();
@@ -271,8 +267,7 @@ function MapRef({
         selectedPlaceId={selectedPlaceId}
         places={places}
         userLocation={userLocation}
-        zoomTrigger={zoomTrigger}
-        onZoomTriggered={onZoomTriggered}
+        locateTrigger={locateTrigger}
       />
       <TileLayer
         attribution='© 地圖資料由地政總署提供'
