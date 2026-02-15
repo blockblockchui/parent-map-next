@@ -42,7 +42,7 @@ function fixLeafletIcon() {
   });
 }
 
-// Individual place marker component - uses CSS transform for selection
+// Individual place marker component
 function PlaceMarker({
   place,
   isSelected,
@@ -52,26 +52,8 @@ function PlaceMarker({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  const markerRef = useRef<L.Marker | null>(null);
-
-  useEffect(() => {
-    if (markerRef.current) {
-      const element = markerRef.current.getElement();
-      if (element) {
-        if (isSelected) {
-          element.style.transform = 'scale(1.3)';
-          element.style.transition = 'transform 0.2s ease';
-        } else {
-          element.style.transform = 'scale(1)';
-          element.style.transition = 'transform 0.2s ease';
-        }
-      }
-    }
-  }, [isSelected]);
-
   return (
     <Marker
-      ref={markerRef}
       position={[place.lat, place.lng]}
       eventHandlers={{
         click: onClick,
