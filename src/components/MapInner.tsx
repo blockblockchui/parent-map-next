@@ -41,6 +41,44 @@ function fixLeafletIcon() {
   });
 }
 
+// Create selected marker icon
+const selectedIcon = L.divIcon({
+  className: "custom-selected-icon",
+  html: "<div style='background-color:#ef4444;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);'></div>",
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+});
+
+// Individual place marker component
+function PlaceMarker({
+  place,
+  isSelected,
+  onClick,
+}: {
+  place: Place;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Marker
+      position={[place.lat, place.lng]}
+      eventHandlers={{
+        click: onClick,
+      }}
+      icon={isSelected ? selectedIcon : undefined}
+      opacity={isSelected ? 1 : 0.8}
+      zIndexOffset={isSelected ? 1000 : 0}
+    >
+      <Popup>
+        <div className="font-sans">
+          <p className="font-bold text-sm">{place.name}</p>
+          <p className="text-xs text-gray-600">{place.district}</p>
+        </div>
+      </Popup>
+    </Marker>
+  );
+}
+
 // Calculate distance between two points in km
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371; // Earth's radius in km
@@ -337,33 +375,14 @@ function MapRef({
       <MapBounds places={places} />
       
       {/* Filtered place markers */}
-      {filteredPlaces.map((place) => {
-        const isSelected = place.id === selectedPlaceId;
-        return (
-          <Marker
-            key={place.id}
-            position={[place.lat, place.lng]}
-            eventHandlers={{
-              click: () => onMarkerClick?.(place),
-            }}
-            icon={isSelected ? L.divIcon({
-              className: "custom-selected-icon",
-              html: "<div style='background-color:#ef4444;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);'></div>",
-              iconSize: [20, 20],
-              iconAnchor: [10, 10],
-            }) : undefined}
-            opacity={isSelected ? 1 : 0.8}
-            zIndexOffset={isSelected ? 1000 : 0}
-          >
-            <Popup>
-              <div className="font-sans">
-                <p className="font-bold text-sm">{place.name}</p>
-                <p className="text-xs text-gray-600">{place.district}</p>
-              </div>
-            </Popup>
-          </Marker>
-        );
-      })}
+      {filteredPlaces.map((place) => (
+        <PlaceMarker
+          key={place.id}
+          place={place}
+          isSelected={place.id === selectedPlaceId}
+          onClick={() => onMarkerClick?.(place)}
+        />
+      ))}
       
       {/* User location marker */}
       {userLocation && (
